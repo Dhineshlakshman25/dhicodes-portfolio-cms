@@ -1,0 +1,83 @@
+import { prisma } from "@/infrastructure/database/prisma";
+
+import { Theme } from "../../domain/entities/Theme";
+import { IThemeRepository } from "../../domain/repositories/IThemeRepository";
+
+export class PrismaThemeRepository
+  implements IThemeRepository
+{
+  async getAll(): Promise<Theme[]> {
+    return prisma.themes.findMany({
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
+
+  async create(
+    data: Partial<Theme>
+  ): Promise<Theme> {
+    return prisma.themes.create({
+      data: {
+        id: data.id!,
+        name: data.name!,
+        slug: data.slug!,
+
+        description:
+          data.description,
+
+        primary_color:
+          data.primary_color,
+
+        secondary_color:
+          data.secondary_color,
+
+        accent_color:
+          data.accent_color,
+
+        background_color:
+          data.background_color,
+
+        surface_color:
+          data.surface_color,
+
+        text_color:
+          data.text_color,
+
+        font_family:
+          data.font_family,
+
+        preview_image:
+          data.preview_image,
+
+        is_default:
+          data.is_default,
+
+        is_active:
+          data.is_active,
+      },
+    });
+  }
+
+  async update(
+    id: string,
+    data: Partial<Theme>
+  ): Promise<Theme> {
+    return prisma.themes.update({
+      where: {
+        id,
+      },
+      data,
+    });
+  }
+
+  async delete(
+    id: string
+  ): Promise<void> {
+    await prisma.themes.delete({
+      where: {
+        id,
+      },
+    });
+  }
+}

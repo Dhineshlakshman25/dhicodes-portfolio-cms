@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model blogs {
+  id           Int       @id @default(autoincrement())
+  title        String    @db.VarChar(255)
+  slug         String    @unique @db.VarChar(255)
+  excerpt      String?
+  content      String?
+  cover_image  String?
+  is_published Boolean?  @default(false)
+  published_at DateTime? @db.Timestamp(6)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @db.Timestamp(6)
+
+  @@index([slug], map: "idx_blogs_slug")
+}
+
+model certifications {
+  id                Int       @id @default(autoincrement())
+  title             String    @db.VarChar(255)
+  issuer            String?   @db.VarChar(255)
+  issue_date        DateTime? @db.Date
+  credential_id     String?   @db.VarChar(255)
+  credential_url    String?
+  certificate_image String?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model contact_messages {
+  id         Int       @id @default(autoincrement())
+  name       String?   @db.VarChar(255)
+  email      String?   @db.VarChar(255)
+  phone      String?   @db.VarChar(20)
+  message    String?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  subject    String?   @db.VarChar(255)
+  is_read    Boolean?  @default(false)
+}
+
+model education {
+  id               Int       @id @default(autoincrement())
+  institution_name String?   @db.VarChar(255)
+  degree           String?   @db.VarChar(255)
+  field_of_study   String?   @db.VarChar(255)
+  start_date       DateTime? @db.Date
+  end_date         DateTime? @db.Date
+  grade            String?   @db.VarChar(50)
+  description      String?
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  logo_url         String?
+  display_order    Int?      @default(0)
+}
+
+model experience {
+  id              Int       @id @default(autoincrement())
+  company_name    String    @db.VarChar(255)
+  role            String    @db.VarChar(255)
+  start_date      DateTime  @db.Date
+  end_date        DateTime? @db.Date
+  description     String?
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  employment_type String?   @db.VarChar(50)
+  location        String?   @db.VarChar(255)
+  company_logo    String?
+  tech_stack      String?
+  is_current      Boolean?  @default(false)
+  display_order   Int?      @default(0)
+}
+
+model learning_roadmap {
+  id            Int       @id @default(autoincrement())
+  technology    String    @db.VarChar(255)
+  status        String?   @default("PLANNED") @db.VarChar(50)
+  description   String?
+  target_date   DateTime? @db.Date
+  display_order Int?      @default(0)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model profiles {
+  id         String    @id
+  name       String
+  title      String?
+  bio        String?
+  avatar_url String?
+  resume_url String?
+  location   String?
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+
+  email String? @db.VarChar(255)
+
+  phone           String? @db.VarChar(20)
+  alternate_phone String? @db.VarChar(20)
+
+  tagline          String? @db.VarChar(500)
+  cover_image_url  String?
+  years_experience Int?    @default(0)
+
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model project_features {
+  id         Int       @id @default(autoincrement())
+  project_id String?
+  feature    String
+  projects   projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model project_images {
+  id            Int       @id @default(autoincrement())
+  project_id    String?
+  image_url     String
+  display_order Int?      @default(0)
+  title         String?   @db.VarChar(255)
+  projects      projects? @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([project_id], map: "idx_project_images_project")
+}
+
+model project_skills {
+  project_id String
+  skill_id   Int
+  usage_type String?  @default("secondary") @db.VarChar(20)
+  projects   projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills     skills   @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([project_id, skill_id])
+}
+
+model projects {
+  id                String             @id
+  title             String
+  slug              String             @unique
+  short_description String?
+  full_description  String?
+  github_url        String?
+  live_url          String?
+  cover_image       String?
+  is_featured       Boolean?           @default(false)
+  is_published      Boolean?           @default(false)
+  created_at        DateTime?          @default(now()) @db.Timestamp(6)
+  project_type      String?            @db.VarChar(50)
+  status            String?            @db.VarChar(50)
+  start_date        DateTime?          @db.Date
+  end_date          DateTime?          @db.Date
+  display_order     Int?               @default(0)
+  updated_at        DateTime?          @default(now()) @db.Timestamp(6)
+  project_features  project_features[]
+  project_images    project_images[]
+  project_skills    project_skills[]
+
+  @@index([slug], map: "idx_projects_slug")
+}
+
+model site_settings {
+  id Int @id @default(autoincrement())
+
+  site_name        String? @db.VarChar(255)
+  site_description String?
+  site_keywords    String?
+
+  logo_url    String?
+  favicon_url String?
+
+  footer_text String?
+
+  active_theme_id String?
+
+  maintenance_mode Boolean? @default(false)
+
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+}
+
+model skill_categories {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique(map: "unique_skill_category_name") @db.VarChar(100)
+  display_order Int?     @default(0)
+  skills        skills[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model skills {
+  id               Int               @id @default(autoincrement())
+  name             String            @db.VarChar(100)
+  category_id      Int?
+  proficiency      Int?              @default(80)
+  icon_url         String?
+  display_order    Int?              @default(0)
+  is_featured      Boolean?          @default(false)
+  project_skills   project_skills[]
+  skill_categories skill_categories? @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([category_id], map: "idx_skills_category")
+}
+
+model social_links {
+  id            Int       @id @default(autoincrement())
+  platform      String    @db.VarChar(50)
+  url           String
+  icon          String?   @db.VarChar(50)
+  display_order Int?      @default(0)
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model users {
+  id         String    @id
+  email      String    @unique
+  password   String
+  role       String?   @default("ADMIN")
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  is_active  Boolean?  @default(true)
+  last_login DateTime? @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model themes {
+  id               String @id
+  name             String
+  slug             String @unique
+
+  description      String?
+
+  primary_color    String?
+  secondary_color  String?
+  accent_color     String?
+
+  background_color String?
+  surface_color    String?
+  text_color       String?
+
+  font_family      String?
+
+  preview_image    String?
+
+  is_default       Boolean? @default(false)
+  is_active        Boolean? @default(true)
+
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+}
