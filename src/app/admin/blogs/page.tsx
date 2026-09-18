@@ -15,10 +15,8 @@ import {
   ClipboardPaste,
   Sparkles,
   Upload,
-  BookOpen,
   Wand2,
   RotateCcw,
-  Check,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -53,13 +51,8 @@ export default function AdminBlogsPage() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
 
-  // Fallback modal if browser blocks navigator.clipboard.readText()
-  const [pasteModalOpen, setPasteModalOpen] = useState(false);
-  const [fallbackPasteText, setFallbackPasteText] = useState("");
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const fallbackTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [formData, setFormData] = useState<Partial<Blog>>({
     title: "",
@@ -108,65 +101,29 @@ export default function AdminBlogsPage() {
   };
 
   /**
-   * Inserts text directly into Content, applying the intelligent auto-formatter.
-   * If Title or Excerpt is currently empty, it auto-populates them.
+   * Auto-Format content: Converts headings, SQL blocks, lists, and quotes into clean Markdown
    */
-  const insertContentText = (rawText: string) => {
-    if (!rawText || rawText.trim() === "") {
-      toast.error("Pasted text is empty.");
+  const handleAutoFormatContent = () => {
+    if (!formData.content || formData.content.trim() === "") {
+      toast.error("Content is empty! Type or paste your text first, then click Auto-Format.");
       return;
     }
 
-    const formatted = autoFormatBlogArticle(rawText);
+    const formatted = autoFormatBlogArticle(formData.content);
 
-    setFormData((prev) => {
-      const existing = prev.content || "";
-      const newContent = existing.trim() === ""
-        ? formatted.content
-        : `${existing}\n\n${formatted.content}`;
+    setFormData((prev) => ({
+      ...prev,
+      content: formatted.content,
+      title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
+      slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
+      excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
+    }));
 
-      return {
-        ...prev,
-        content: newContent,
-        title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
-        slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
-        excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
-      };
-    });
-
-    toast.success(
-      `✨ Formatted & pasted ${formatted.wordCount} words into Content!`
-    );
+    toast.success(`✨ Article auto-formatted! (${formatted.wordCount} words • ~${formatted.readMinutes} min read)`);
   };
 
   /**
-   * Robust "Paste Here" button handler:
-   * 1. Attempts direct clipboard read.
-   * 2. If browser security blocks it, seamlessly opens the Quick Paste modal fallback.
-   */
-  const handlePasteHere = async () => {
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.readText) {
-        const text = await navigator.clipboard.readText();
-        if (text && text.trim() !== "") {
-          insertContentText(text);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn("Clipboard API permission restricted by browser. Opening Quick Paste modal.", err);
-    }
-
-    // Seamless Fallback: open quick paste modal where user can press Ctrl+V
-    setFallbackPasteText("");
-    setPasteModalOpen(true);
-    setTimeout(() => {
-      fallbackTextareaRef.current?.focus();
-    }, 120);
-  };
-
-  /**
-   * Top bar smart import (imports entire article + meta)
+   * One-click clipboard read button
    */
   const handlePasteFromClipboard = async () => {
     try {
@@ -176,47 +133,28 @@ export default function AdminBlogsPage() {
           const formatted = autoFormatBlogArticle(text);
           setFormData((prev) => ({
             ...prev,
-            title: formatted.title,
-            slug: formatted.slug,
-            excerpt: formatted.excerpt,
-            content: formatted.content,
+            content: prev.content ? `${prev.content}\n\n${formatted.content}` : formatted.content,
+            title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
+            slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
+            excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
           }));
-          toast.success(`✨ Full article imported & formatted! (${formatted.wordCount} words)`);
+          toast.success(`✨ Pasted and auto-formatted ${formatted.wordCount} words!`);
           return;
         }
       }
-    } catch (err) {
-      console.warn("Clipboard API blocked, opening fallback", err);
+    } catch {
+      // Browser blocked clipboard reading
     }
 
-    setFallbackPasteText("");
-    setPasteModalOpen(true);
-    setTimeout(() => {
-      fallbackTextareaRef.current?.focus();
-    }, 120);
+    // Gracefully focus the textarea so the user can immediately press Ctrl+V
+    if (contentTextareaRef.current) {
+      contentTextareaRef.current.focus();
+    }
+    toast.info("Content box is focused! Press Ctrl+V (or right-click > Paste) to paste your text.");
   };
 
   /**
-   * Manual trigger to auto-format existing content
-   */
-  const handleAutoFormatContent = () => {
-    if (!formData.content || formData.content.trim() === "") {
-      toast.error("Content is empty! Write or paste text first.");
-      return;
-    }
-    const formatted = autoFormatBlogArticle(formData.content);
-    setFormData((prev) => ({
-      ...prev,
-      content: formatted.content,
-      title: prev.title || formatted.title,
-      slug: prev.slug || formatted.slug,
-      excerpt: prev.excerpt || formatted.excerpt,
-    }));
-    toast.success("✨ Content beautified & structured into clean Markdown!");
-  };
-
-  /**
-   * Upload and read local .md / .txt file
+   * File upload handler for .md and .txt files
    */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -224,32 +162,24 @@ export default function AdminBlogsPage() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target?.result as string;
-      if (content) {
-        insertContentText(content);
+      const text = event.target?.result as string;
+      if (text) {
+        const formatted = autoFormatBlogArticle(text);
+        setFormData((prev) => ({
+          ...prev,
+          content: formatted.content,
+          title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
+          slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
+          excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
+        }));
+        toast.success(`✨ File loaded and auto-formatted! (${formatted.wordCount} words)`);
       }
     };
     reader.readAsText(file);
     e.target.value = "";
   };
 
-  /**
-   * Intercept accidental paste of entire article into Article Title input
-   */
-  const handleTitlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const pasted = e.clipboardData.getData("text");
-    if (pasted && (pasted.includes("\n") || pasted.length > 120)) {
-      e.preventDefault();
-      insertContentText(pasted);
-    }
-  };
-
   const handleTitleChange = (val: string) => {
-    if (val.includes("\n") || (val.length > 180 && val.includes(" "))) {
-      insertContentText(val);
-      return;
-    }
-
     setFormData((prev) => {
       const generatedSlug =
         !editingBlog && (!prev.slug || prev.slug === "")
@@ -261,48 +191,6 @@ export default function AdminBlogsPage() {
           : prev.slug;
       return { ...prev, title: val, slug: generatedSlug };
     });
-  };
-
-  /**
-   * Native Content paste handler: preserves cursor position and auto-formats
-   */
-  const handleContentPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const pasted = e.clipboardData.getData("text/plain");
-    if (!pasted) return;
-
-    // If pasting an article (> 40 chars), format it beautifully
-    if (pasted.length > 40) {
-      e.preventDefault();
-      const formatted = autoFormatBlogArticle(pasted);
-
-      const target = e.currentTarget;
-      const start = target.selectionStart ?? 0;
-      const end = target.selectionEnd ?? 0;
-      const currentVal = formData.content || "";
-
-      const nextVal =
-        currentVal.substring(0, start) +
-        formatted.content +
-        currentVal.substring(end);
-
-      setFormData((prev) => ({
-        ...prev,
-        content: nextVal,
-        title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
-        slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
-        excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
-      }));
-
-      toast.success("✨ Formatted and inserted into Content!");
-
-      setTimeout(() => {
-        if (contentTextareaRef.current) {
-          const newPos = start + formatted.content.length;
-          contentTextareaRef.current.setSelectionRange(newPos, newPos);
-          contentTextareaRef.current.focus();
-        }
-      }, 50);
-    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -369,18 +257,6 @@ export default function AdminBlogsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              openCreate();
-              setTimeout(() => {
-                handlePasteFromClipboard();
-              }, 200);
-            }}
-          >
-            <Sparkles className="w-4 h-4 mr-1.5 text-blue-500" /> Smart Paste & Format
-          </Button>
           <Button variant="primary" size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-1.5" /> Write Article
           </Button>
@@ -398,7 +274,7 @@ export default function AdminBlogsPage() {
             No articles published yet
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
-            Write your first blog post or use Smart Paste to import and auto-format articles from your clipboard.
+            Write your first blog post to share your knowledge with recruiters and visitors.
           </p>
           <div className="mt-4 flex justify-center gap-2">
             <Button variant="primary" size="sm" onClick={openCreate}>
@@ -491,65 +367,6 @@ export default function AdminBlogsPage() {
         maxWidth="4xl"
       >
         <form onSubmit={handleSave} className="space-y-5">
-          {/* Smart Paste & Auto-Format Toolbar */}
-          <div
-            className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border transition-colors"
-            style={{
-              backgroundColor: "color-mix(in srgb, var(--theme-primary) 8%, transparent)",
-              borderColor: "color-mix(in srgb, var(--theme-primary) 25%, transparent)",
-            }}
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className="p-2 rounded-xl"
-                style={{
-                  backgroundColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
-                  color: "var(--theme-primary)",
-                }}
-              >
-                <Wand2 className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold" style={{ color: "var(--theme-text)" }}>
-                  Smart Auto-Formatter & Importer
-                </span>
-                <span className="text-[11px] opacity-70" style={{ color: "var(--theme-text)" }}>
-                  Pastes any article with auto-detected Markdown headings, code blocks, lists, and summary
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handlePasteFromClipboard}
-                className="text-xs cursor-pointer"
-              >
-                <ClipboardPaste className="w-3.5 h-3.5 mr-1.5" />
-                Paste from Clipboard
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5 mr-1.5" />
-                Upload .md / .txt
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".md,.markdown,.txt"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </div>
-          </div>
-
           <ImageUpload
             label="Cover Image"
             folder="blogs"
@@ -563,19 +380,13 @@ export default function AdminBlogsPage() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Input
-                label="Article Title *"
-                value={formData.title || ""}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                onPaste={handleTitlePaste}
-                placeholder="e.g. Scaling Next.js 16 to 1M Users"
-                required
-              />
-              <span className="text-[10px] opacity-50 block mt-1" style={{ color: "var(--theme-text)" }}>
-                Tip: Pasting a full article here automatically populates and formats the entire form.
-              </span>
-            </div>
+            <Input
+              label="Article Title *"
+              value={formData.title || ""}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="e.g. SQL Query Optimization: Building Faster and More Scalable Applications"
+              required
+            />
 
             <Input
               label="Slug *"
@@ -586,7 +397,7 @@ export default function AdminBlogsPage() {
                   slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
                 }))
               }
-              placeholder="scaling-nextjs-16"
+              placeholder="sql-query-optimization"
               required
             />
           </div>
@@ -631,26 +442,43 @@ export default function AdminBlogsPage() {
                   size="sm"
                   onClick={handleAutoFormatContent}
                   className="text-xs h-7 px-2.5 text-blue-500 hover:text-blue-600 cursor-pointer"
-                  title="Auto-format headings, code blocks, lists, and spacing"
+                  title="Auto-format headings, SQL code blocks, lists, and spacing"
                 >
                   <Wand2 className="w-3.5 h-3.5 mr-1 text-blue-500" /> Auto-Format
                 </Button>
 
-                {/* 📋 Quick Paste into Content button */}
+                {/* 📋 Paste from Clipboard Button */}
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={handlePasteHere}
-                  className="text-xs h-7 px-2.5 cursor-pointer font-bold border hover:border-blue-500/50"
+                  onClick={handlePasteFromClipboard}
+                  className="text-xs h-7 px-2.5 cursor-pointer font-semibold border hover:border-blue-500/50"
                   style={{
                     borderColor: "color-mix(in srgb, var(--theme-primary) 30%, transparent)",
                     color: "var(--theme-primary)",
                   }}
-                  title="Paste clipboard text directly into Content and auto-format"
                 >
-                  <ClipboardPaste className="w-3.5 h-3.5 mr-1 text-[var(--theme-primary)]" /> Paste Here
+                  <ClipboardPaste className="w-3.5 h-3.5 mr-1" /> Paste Here
                 </Button>
+
+                {/* 📁 Upload File Button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs h-7 px-2 cursor-pointer opacity-75 hover:opacity-100"
+                >
+                  <Upload className="w-3.5 h-3.5 mr-1" /> Upload .md
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".md,.markdown,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
 
                 {/* Write / Preview Tab Switcher */}
                 <div
@@ -710,9 +538,8 @@ export default function AdminBlogsPage() {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, content: e.target.value }))
                 }
-                onPaste={handleContentPaste}
-                rows={13}
-                placeholder="Paste or write your article here... Headings (#), lists, code blocks (```), blockquotes (>), and bold text are automatically formatted."
+                rows={14}
+                placeholder="Paste or type your article here directly using Ctrl+V or Right-Click > Paste. Then click 'Auto-Format' to beautify headings, SQL queries, and bullet points!"
                 className="font-mono text-xs sm:text-sm leading-relaxed"
               />
             ) : (
@@ -728,7 +555,7 @@ export default function AdminBlogsPage() {
                   <MarkdownRenderer content={formData.content} />
                 ) : (
                   <div className="text-xs opacity-50 italic py-12 text-center">
-                    Nothing to preview yet. Switch to Write tab or click &quot;Paste Here&quot;.
+                    Nothing to preview yet. Switch to Write tab and paste your content.
                   </div>
                 )}
               </div>
@@ -790,49 +617,6 @@ export default function AdminBlogsPage() {
             </div>
           </div>
         </form>
-      </Modal>
-
-      {/* Guaranteed Quick Paste Modal Fallback (When browser blocks direct clipboard API access) */}
-      <Modal
-        isOpen={pasteModalOpen}
-        onClose={() => setPasteModalOpen(false)}
-        title="Paste Your Article / Content"
-        description="Your browser requires manual paste. Press Ctrl+V or right-click to paste below, then click Format & Insert."
-        maxWidth="lg"
-      >
-        <div className="space-y-4">
-          <Textarea
-            ref={fallbackTextareaRef}
-            value={fallbackPasteText}
-            onChange={(e) => setFallbackPasteText(e.target.value)}
-            rows={10}
-            placeholder="Press Ctrl+V (or Command+V) here..."
-            autoFocus
-          />
-
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPasteModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              disabled={!fallbackPasteText.trim()}
-              onClick={() => {
-                insertContentText(fallbackPasteText);
-                setPasteModalOpen(false);
-              }}
-            >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Format & Insert
-            </Button>
-          </div>
-        </div>
       </Modal>
     </div>
   );

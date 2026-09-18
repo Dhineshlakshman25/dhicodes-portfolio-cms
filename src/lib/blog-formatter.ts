@@ -124,10 +124,12 @@ export function autoFormatBlogArticle(rawText: string): FormattedArticle {
         codeBlockBuffer = [];
         continue;
       }
-    } else if (codeBlockBuffer.length > 0) {
       // Flush buffered code lines
       const isTerminal = codeBlockBuffer.some((c) => /^(npm|pnpm|yarn|npx|git|curl)/.test(c.trim()));
-      formattedLines.push(isTerminal ? "```bash" : "```typescript");
+      const isSql = codeBlockBuffer.some((c) => /^(SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN|EXPLAIN|CREATE|DROP|ALTER)/i.test(c.trim()));
+      const isDiagram = codeBlockBuffer.some((c) => /[↓→←↑]/.test(c));
+      const lang = isTerminal ? "bash" : isSql ? "sql" : isDiagram ? "text" : "typescript";
+      formattedLines.push(`\`\`\`${lang}`);
       formattedLines.push(...codeBlockBuffer);
       formattedLines.push("```");
       codeBlockBuffer = [];
