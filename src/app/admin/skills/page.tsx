@@ -100,7 +100,7 @@ export default function AdminSkillsPage() {
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm("Delete this category? Associated skills might be uncategorized.")) return;
+    if (!confirm("Are you sure you want to delete this category? WARNING: All skills under this category will also be permanently deleted!")) return;
     try {
       await api.delete(`/api/admin/skill-categories/${id}`);
       toast.success("Category deleted");

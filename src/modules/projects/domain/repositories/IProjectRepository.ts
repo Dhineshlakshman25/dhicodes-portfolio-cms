@@ -2,8 +2,13 @@ import { Project } from "../entities/Project";
 
 export interface IProjectRepository {
   getAll(): Promise<Project[]>;
+  getAllPublished(): Promise<Project[]>;
 
   getBySlug(
+    slug: string
+  ): Promise<Project | null>;
+
+  getBySlugPublished(
     slug: string
   ): Promise<Project | null>;
 

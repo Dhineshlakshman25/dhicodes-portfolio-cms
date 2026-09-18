@@ -96,9 +96,10 @@ export function ThemeProvider({
         // Check active theme from site-settings
         fetch("/api/site-settings")
           .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-            if (data?.active_theme_id) {
-              setSelectedThemeId(data.active_theme_id);
+          .then((resData) => {
+            const settings = resData?.data ?? resData;
+            if (settings?.active_theme_id) {
+              setSelectedThemeId(settings.active_theme_id);
             }
           })
           .catch(() => {});

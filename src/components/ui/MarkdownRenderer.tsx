@@ -333,17 +333,23 @@ function InlineText({ text }: { text: string }) {
         // Link [text](url)
         const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
         if (linkMatch) {
+          const rawUrl = linkMatch[2].trim();
+          const isSafeUrl = /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(rawUrl);
+          const safeHref = isSafeUrl ? rawUrl : "#";
+
           return (
             <a
               key={idx}
-              href={linkMatch[2]}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={safeHref}
+              target={isSafeUrl && !rawUrl.startsWith("#") ? "_blank" : undefined}
+              rel={isSafeUrl && !rawUrl.startsWith("#") ? "noopener noreferrer" : undefined}
               className="inline-flex items-center gap-0.5 font-semibold underline decoration-[var(--theme-primary)] hover:opacity-80 transition"
               style={{ color: "var(--theme-primary)" }}
             >
               <span>{linkMatch[1]}</span>
-              <ExternalLink className="w-3 h-3 inline ml-0.5 opacity-70" />
+              {isSafeUrl && !rawUrl.startsWith("#") && (
+                <ExternalLink className="w-3 h-3 inline ml-0.5 opacity-70" />
+              )}
             </a>
           );
         }

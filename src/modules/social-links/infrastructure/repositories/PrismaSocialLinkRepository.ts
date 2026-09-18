@@ -16,6 +16,19 @@ export class PrismaSocialLinkRepository
     });
   }
 
+  async getAllActive(): Promise<
+    SocialLink[]
+  > {
+    return prisma.social_links.findMany({
+      where: {
+        is_active: true,
+      },
+      orderBy: {
+        display_order: "asc",
+      },
+    });
+  }
+
   async create(
     data: Partial<SocialLink>
   ): Promise<SocialLink> {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { GetThemesUseCase } from "../../application/use-cases/GetThemesUseCase";
+import { GetActiveThemesUseCase } from "../../application/use-cases/GetActiveThemesUseCase";
 import { CreateThemeUseCase } from "../../application/use-cases/CreateThemeUseCase";
 import { UpdateThemeUseCase } from "../../application/use-cases/UpdateThemeUseCase";
 import { DeleteThemeUseCase } from "../../application/use-cases/DeleteThemeUseCase";
@@ -11,6 +12,16 @@ export class ThemeController {
   async get() {
     const data =
       await new GetThemesUseCase().execute();
+
+    return NextResponse.json({
+      success: true,
+      data,
+    });
+  }
+
+  async getActive() {
+    const data =
+      await new GetActiveThemesUseCase().execute();
 
     return NextResponse.json({
       success: true,

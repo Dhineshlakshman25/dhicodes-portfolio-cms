@@ -3,6 +3,12 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { LearningRoadmap } from "../../domain/entities/LearningRoadmap";
 import { ILearningRoadmapRepository } from "../../domain/repositories/ILearningRoadmapRepository";
 
+function parseDateSafely(val: unknown): Date | null {
+  if (!val) return null;
+  const d = new Date(val as any);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export class PrismaLearningRoadmapRepository
   implements ILearningRoadmapRepository
 {
@@ -22,9 +28,7 @@ export class PrismaLearningRoadmapRepository
         technology: data.technology!,
         status: data.status,
         description: data.description,
-        target_date: data.target_date
-          ? new Date(data.target_date)
-          : undefined,
+        target_date: parseDateSafely(data.target_date),
         display_order: data.display_order,
       },
     });
@@ -42,9 +46,10 @@ export class PrismaLearningRoadmapRepository
         technology: data.technology,
         status: data.status,
         description: data.description,
-        target_date: data.target_date
-          ? new Date(data.target_date)
-          : undefined,
+        target_date:
+          data.target_date !== undefined
+            ? parseDateSafely(data.target_date)
+            : undefined,
         display_order: data.display_order,
       },
     });

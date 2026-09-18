@@ -3,6 +3,12 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { Experience } from "../../domain/entities/Experience";
 import { IExperienceRepository } from "../../domain/repositories/IExperienceRepository";
 
+function parseDateSafely(val: unknown): Date | null {
+  if (!val) return null;
+  const d = new Date(val as any);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export class PrismaExperienceRepository
   implements IExperienceRepository
 {
@@ -25,15 +31,9 @@ export class PrismaExperienceRepository
           data.company_name!,
         role: data.role!,
 
-        start_date: new Date(
-          data.start_date as Date
-        ),
+        start_date: parseDateSafely(data.start_date) || new Date(),
 
-        end_date: data.end_date
-          ? new Date(
-              data.end_date as Date
-            )
-          : null,
+        end_date: parseDateSafely(data.end_date),
 
         description:
           data.description,
@@ -87,19 +87,13 @@ export class PrismaExperienceRepository
             : undefined,
 
         start_date:
-          cleanData.start_date
-            ? new Date(
-                cleanData.start_date as Date
-              )
+          cleanData.start_date !== undefined
+            ? parseDateSafely(cleanData.start_date) || undefined
             : undefined,
 
         end_date:
-          cleanData.end_date
-            ? new Date(
-                cleanData.end_date as Date
-              )
-            : cleanData.end_date === null
-            ? null
+          cleanData.end_date !== undefined
+            ? parseDateSafely(cleanData.end_date)
             : undefined,
       },
     });

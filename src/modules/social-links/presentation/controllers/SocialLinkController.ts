@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { GetSocialLinksUseCase } from "../../application/use-cases/GetSocialLinksUseCase";
+import { GetActiveSocialLinksUseCase } from "../../application/use-cases/GetActiveSocialLinksUseCase";
 import { CreateSocialLinkUseCase } from "../../application/use-cases/CreateSocialLinkUseCase";
 import { UpdateSocialLinkUseCase } from "../../application/use-cases/UpdateSocialLinkUseCase";
 import { DeleteSocialLinkUseCase } from "../../application/use-cases/DeleteSocialLinkUseCase";
@@ -11,6 +12,16 @@ export class SocialLinkController {
   async get() {
     const data =
       await new GetSocialLinksUseCase().execute();
+
+    return NextResponse.json({
+      success: true,
+      data,
+    });
+  }
+
+  async getActive() {
+    const data =
+      await new GetActiveSocialLinksUseCase().execute();
 
     return NextResponse.json({
       success: true,

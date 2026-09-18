@@ -16,6 +16,18 @@ export class AuthController {
     password: string;
   }) {
     try {
+      if (!body || !body.email || !body.password) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Email and password are required",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
       const result = await new LoginUseCase().execute(
         body.email,
         body.password
@@ -72,28 +84,40 @@ export class AuthController {
   }
 
   async me() {
-    const token = await getSessionToken();
+    try {
+      const token = await getSessionToken();
 
-    if (!token) {
+      if (!token) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Unauthorized",
+          },
+          {
+            status: 401,
+          }
+        );
+      }
+
+      const user =
+        await new GetCurrentUserUseCase().execute(
+          token
+        );
+
+      return NextResponse.json({
+        success: true,
+        data: user,
+      });
+    } catch {
       return NextResponse.json(
         {
           success: false,
-          message: "Unauthorized",
+          message: "Session expired or invalid",
         },
         {
           status: 401,
         }
       );
     }
-
-    const user =
-      await new GetCurrentUserUseCase().execute(
-        token
-      );
-
-    return NextResponse.json({
-      success: true,
-      data: user,
-    });
   }
 }

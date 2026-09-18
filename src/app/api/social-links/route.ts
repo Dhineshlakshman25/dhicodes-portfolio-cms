@@ -4,5 +4,5 @@ const controller =
   new SocialLinkController();
 
 export async function GET() {
-  return controller.get();
+  return controller.getActive();
 }

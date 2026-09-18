@@ -27,12 +27,60 @@ export class PrismaProjectRepository
     }) as unknown as Promise<Project[]>;
   }
 
+  async getAllPublished(): Promise<Project[]> {
+    return prisma.projects.findMany({
+      where: {
+        is_published: true,
+      },
+      include: {
+        project_features: true,
+        project_images: {
+          orderBy: {
+            display_order: "asc",
+          },
+        },
+        project_skills: {
+          include: {
+            skills: true,
+          },
+        },
+      },
+      orderBy: {
+        display_order: "asc",
+      },
+    }) as unknown as Promise<Project[]>;
+  }
+
   async getBySlug(
     slug: string
   ): Promise<Project | null> {
     return prisma.projects.findUnique({
       where: {
         slug,
+      },
+      include: {
+        project_features: true,
+        project_images: {
+          orderBy: {
+            display_order: "asc",
+          },
+        },
+        project_skills: {
+          include: {
+            skills: true,
+          },
+        },
+      },
+    }) as unknown as Promise<Project | null>;
+  }
+
+  async getBySlugPublished(
+    slug: string
+  ): Promise<Project | null> {
+    return prisma.projects.findFirst({
+      where: {
+        slug,
+        is_published: true,
       },
       include: {
         project_features: true,

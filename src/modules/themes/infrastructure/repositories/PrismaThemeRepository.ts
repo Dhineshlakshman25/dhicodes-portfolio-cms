@@ -14,6 +14,17 @@ export class PrismaThemeRepository
     });
   }
 
+  async getAllActive(): Promise<Theme[]> {
+    return prisma.themes.findMany({
+      where: {
+        is_active: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+  }
+
   async create(
     data: Partial<Theme>
   ): Promise<Theme> {

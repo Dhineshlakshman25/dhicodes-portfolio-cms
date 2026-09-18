@@ -14,10 +14,30 @@ export class PrismaBlogRepository
     });
   }
 
+  async getAllPublished(): Promise<Blog[]> {
+    return prisma.blogs.findMany({
+      where: {
+        is_published: true,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  }
+
   async getBySlug(slug: string): Promise<Blog | null> {
     return prisma.blogs.findUnique({
       where: {
         slug,
+      },
+    });
+  }
+
+  async getBySlugPublished(slug: string): Promise<Blog | null> {
+    return prisma.blogs.findFirst({
+      where: {
+        slug,
+        is_published: true,
       },
     });
   }

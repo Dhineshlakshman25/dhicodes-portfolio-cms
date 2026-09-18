@@ -14,5 +14,5 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  return controller.getBySlug(slug);
+  return controller.getPublishedBySlug(slug);
 }

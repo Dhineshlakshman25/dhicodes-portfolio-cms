@@ -269,10 +269,9 @@ export default function AdminMessagesPage() {
                     href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(
                       selectedMessage.subject || "Your Inquiry"
                     )}`}
+                    className="inline-flex items-center justify-center rounded-xl font-bold transition px-3 py-1.5 text-xs bg-blue-600 text-white hover:bg-blue-500 shadow-sm"
                   >
-                    <Button variant="primary" size="sm">
-                      <Reply className="w-3.5 h-3.5 mr-1" /> Reply via Email
-                    </Button>
+                    <Reply className="w-3.5 h-3.5 mr-1" /> Reply via Email
                   </a>
                 )}
               </div>

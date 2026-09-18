@@ -391,16 +391,15 @@ export function HeroSection({ profile, socialLinks = [] }: HeroSectionProps) {
 
         {/* Main Action Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <a href="#projects">
-            <button
-              className="px-6 py-3 rounded-xl font-bold text-sm text-white shadow-lg flex items-center gap-2 transition hover:opacity-90 active:scale-95 cursor-pointer"
-              style={{
-                backgroundColor: "var(--theme-primary)",
-                boxShadow: "0 10px 25px -5px var(--theme-primary)",
-              }}
-            >
-              Explore Projects <ArrowDown className="w-4 h-4" />
-            </button>
+          <a
+            href="#projects"
+            className="px-6 py-3 rounded-xl font-bold text-sm text-white shadow-lg flex items-center gap-2 transition hover:opacity-90 active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: "var(--theme-primary)",
+              boxShadow: "0 10px 25px -5px var(--theme-primary)",
+            }}
+          >
+            Explore Projects <ArrowDown className="w-4 h-4" />
           </a>
 
           {whatsappUrl && (
@@ -416,17 +415,18 @@ export function HeroSection({ profile, socialLinks = [] }: HeroSectionProps) {
           )}
 
           {profile?.resume_url ? (
-            <a href={profile.resume_url} target="_blank" rel="noreferrer">
-              <button
-                className="px-5 py-3 rounded-xl font-bold text-sm border flex items-center gap-2 transition hover:bg-white/5 active:scale-95 cursor-pointer"
-                style={{
-                  backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
-                  borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
-                  color: "var(--theme-text)",
-                }}
-              >
-                <FileDown className="w-4 h-4" style={{ color: "var(--theme-primary)" }} /> Download Resume
-              </button>
+            <a
+              href={profile.resume_url}
+              target="_blank"
+              rel="noreferrer"
+              className="px-5 py-3 rounded-xl font-bold text-sm border flex items-center gap-2 transition hover:bg-white/5 active:scale-95 cursor-pointer"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
+                borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
+                color: "var(--theme-text)",
+              }}
+            >
+              <FileDown className="w-4 h-4" style={{ color: "var(--theme-primary)" }} /> Download Resume
             </a>
           ) : null}
 

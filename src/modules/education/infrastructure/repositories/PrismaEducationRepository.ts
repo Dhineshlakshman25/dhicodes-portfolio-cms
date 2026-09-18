@@ -3,6 +3,12 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { Education } from "../../domain/entities/Education";
 import { IEducationRepository } from "../../domain/repositories/IEducationRepository";
 
+function parseDateSafely(val: unknown): Date | null {
+  if (!val) return null;
+  const d = new Date(val as any);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export class PrismaEducationRepository
   implements IEducationRepository
 {
@@ -29,19 +35,9 @@ export class PrismaEducationRepository
         field_of_study:
           data.field_of_study,
 
-        start_date:
-          data.start_date
-            ? new Date(
-                data.start_date
-              )
-            : null,
+        start_date: parseDateSafely(data.start_date),
 
-        end_date:
-          data.end_date
-            ? new Date(
-                data.end_date
-              )
-            : null,
+        end_date: parseDateSafely(data.end_date),
 
         grade: data.grade,
 
@@ -80,19 +76,13 @@ export class PrismaEducationRepository
             : undefined,
 
         start_date:
-          cleanData.start_date
-            ? new Date(
-                cleanData.start_date
-              )
+          cleanData.start_date !== undefined
+            ? parseDateSafely(cleanData.start_date)
             : undefined,
 
         end_date:
-          cleanData.end_date
-            ? new Date(
-                cleanData.end_date
-              )
-            : cleanData.end_date === null
-            ? null
+          cleanData.end_date !== undefined
+            ? parseDateSafely(cleanData.end_date)
             : undefined,
       },
     });

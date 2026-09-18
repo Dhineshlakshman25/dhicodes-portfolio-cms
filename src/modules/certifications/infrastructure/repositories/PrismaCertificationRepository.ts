@@ -3,6 +3,12 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { Certification } from "../../domain/entities/Certification";
 import { ICertificationRepository } from "../../domain/repositories/ICertificationRepository";
 
+function parseDateSafely(val: unknown): Date | null {
+  if (!val) return null;
+  const d = new Date(val as any);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export class PrismaCertificationRepository
   implements ICertificationRepository
 {
@@ -25,12 +31,7 @@ export class PrismaCertificationRepository
 
         issuer: data.issuer,
 
-        issue_date:
-          data.issue_date
-            ? new Date(
-                data.issue_date
-              )
-            : null,
+        issue_date: parseDateSafely(data.issue_date),
 
         credential_id:
           data.credential_id,
@@ -63,12 +64,8 @@ export class PrismaCertificationRepository
         ...cleanData,
 
         issue_date:
-          cleanData.issue_date
-            ? new Date(
-                cleanData.issue_date
-              )
-            : cleanData.issue_date === null
-            ? null
+          cleanData.issue_date !== undefined
+            ? parseDateSafely(cleanData.issue_date)
             : undefined,
       },
     });

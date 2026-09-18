@@ -21,10 +21,69 @@ export class ContactMessageController {
   async create(
     body: Record<string, unknown>
   ) {
-    const data =
-      await new CreateContactMessageUseCase().execute(
-        body as never
+    const name = typeof body?.name === "string" ? body.name.trim() : "";
+    const email = typeof body?.email === "string" ? body.email.trim() : "";
+    const message = typeof body?.message === "string" ? body.message.trim() : "";
+    const subject = typeof body?.subject === "string" ? body.subject.trim() : "";
+    const phone = typeof body?.phone === "string" ? body.phone.trim() : "";
+
+    if (!name || name.length < 2) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please enter a valid name (at least 2 characters).",
+        },
+        {
+          status: 400,
+        }
       );
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Please provide a valid email address.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!message || message.length < 5) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Message must be at least 5 characters.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (message.length > 5000) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Message cannot exceed 5,000 characters.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const data =
+      await new CreateContactMessageUseCase().execute({
+        name,
+        email,
+        message,
+        subject: subject || undefined,
+        phone: phone || undefined,
+      } as never);
 
     return NextResponse.json(
       {

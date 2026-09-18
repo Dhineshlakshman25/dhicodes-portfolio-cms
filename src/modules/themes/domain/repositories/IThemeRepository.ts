@@ -2,6 +2,7 @@ import { Theme } from "../entities/Theme";
 
 export interface IThemeRepository {
   getAll(): Promise<Theme[]>;
+  getAllActive(): Promise<Theme[]>;
 
   create(
     data: Partial<Theme>

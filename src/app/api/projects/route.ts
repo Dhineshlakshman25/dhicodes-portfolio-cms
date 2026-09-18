@@ -4,5 +4,5 @@ const controller =
   new ProjectController();
 
 export async function GET() {
-  return controller.get();
+  return controller.getPublished();
 }
