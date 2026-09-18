@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { SafeImage } from "@/components/ui/SafeImage";
 import {
   FileText,
@@ -12,6 +12,12 @@ import {
   Calendar,
   Loader2,
   Image as ImageIcon,
+  ClipboardPaste,
+  Sparkles,
+  Upload,
+  BookOpen,
+  Check,
+  RotateCcw,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -42,6 +48,8 @@ export default function AdminBlogsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<Partial<Blog>>({
     title: "",
@@ -78,16 +86,126 @@ export default function AdminBlogsPage() {
       cover_image: "",
       is_published: true,
     });
+    setActiveTab("write");
     setModalOpen(true);
   };
 
   const openEdit = (blog: Blog) => {
     setEditingBlog(blog);
     setFormData(blog);
+    setActiveTab("write");
     setModalOpen(true);
   };
 
+  /**
+   * Smart Parser: Extracts Title, Slug, Excerpt, and Full Content from raw pasted text/markdown
+   */
+  const applyPastedArticle = (rawText: string) => {
+    if (!rawText || rawText.trim() === "") {
+      toast.error("Pasted text is empty.");
+      return;
+    }
+
+    const cleanText = rawText.replace(/\r\n/g, "\n");
+    const lines = cleanText.split("\n");
+    const nonEmptyLines = lines.map((l) => l.trim()).filter(Boolean);
+
+    if (nonEmptyLines.length === 0) {
+      toast.error("No valid text found in article.");
+      return;
+    }
+
+    // 1. Extract Title (first line, stripping markdown hashes or bullet symbols)
+    const firstLine = nonEmptyLines[0].replace(/^[#*>\-\s]+/, "").trim();
+    const extractedTitle = firstLine.slice(0, 150);
+
+    // 2. Generate clean URL slug
+    const extractedSlug = extractedTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+
+    // 3. Extract Excerpt (next line that isn't a heading)
+    let extractedExcerpt = "";
+    for (let i = 1; i < nonEmptyLines.length; i++) {
+      const line = nonEmptyLines[i];
+      if (!line.startsWith("#") && line.length > 20) {
+        extractedExcerpt = line.replace(/^[#*>\-\s]+/, "").trim().slice(0, 200);
+        break;
+      }
+    }
+    if (!extractedExcerpt && nonEmptyLines.length > 1) {
+      extractedExcerpt = nonEmptyLines[1].replace(/^[#*>\-\s]+/, "").trim().slice(0, 200);
+    }
+    if (!extractedExcerpt) {
+      extractedExcerpt = extractedTitle.slice(0, 120);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      title: prev.title && prev.title.trim() !== "" ? prev.title : extractedTitle,
+      slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : extractedSlug,
+      excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : extractedExcerpt,
+      content: cleanText,
+    }));
+
+    const wordCount = cleanText.trim().split(/\s+/).filter(Boolean).length;
+    toast.success(`✨ Article imported! (${wordCount} words, Title, Slug & Excerpt populated)`);
+  };
+
+  /**
+   * One-click direct paste from system clipboard
+   */
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || text.trim() === "") {
+        toast.error("Clipboard is empty! Copy your article text first, then click paste.");
+        return;
+      }
+      applyPastedArticle(text);
+    } catch {
+      toast.info("Please use Ctrl+V / Command+V to paste your article directly into the Content box.");
+    }
+  };
+
+  /**
+   * Upload and read local .md / .txt file
+   */
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        applyPastedArticle(content);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  /**
+   * Intercept accidental paste of entire article into Article Title input
+   */
+  const handleTitlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text");
+    if (pasted && (pasted.includes("\n") || pasted.length > 150)) {
+      e.preventDefault();
+      applyPastedArticle(pasted);
+    }
+  };
+
   const handleTitleChange = (val: string) => {
+    // If user pasted multi-line text into input
+    if (val.includes("\n") || (val.length > 200 && val.includes(" "))) {
+      applyPastedArticle(val);
+      return;
+    }
+
     setFormData((prev) => {
       const generatedSlug =
         !editingBlog && (!prev.slug || prev.slug === "")
@@ -95,9 +213,37 @@ export default function AdminBlogsPage() {
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, "-")
               .replace(/^-+|-+$/g, "")
+              .slice(0, 80)
           : prev.slug;
       return { ...prev, title: val, slug: generatedSlug };
     });
+  };
+
+  /**
+   * Content paste handler: if title is empty, automatically auto-fill metadata
+   */
+  const handleContentPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pasted = e.clipboardData.getData("text/plain");
+    if (pasted && (!formData.title || formData.title.trim() === "")) {
+      const lines = pasted.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length > 0) {
+        const titleCandidate = lines[0].replace(/^[#*>\-\s]+/, "").trim().slice(0, 150);
+        const slugCandidate = titleCandidate
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 80);
+        const excerptCandidate = lines.length > 1 ? lines[1].replace(/^[#*>\-\s]+/, "").trim().slice(0, 200) : "";
+
+        setFormData((prev) => ({
+          ...prev,
+          title: prev.title || titleCandidate,
+          slug: prev.slug || slugCandidate,
+          excerpt: prev.excerpt || excerptCandidate,
+        }));
+        toast.info("Auto-filled Title and Slug from your pasted content!");
+      }
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -146,8 +292,14 @@ export default function AdminBlogsPage() {
     }
   };
 
+  const wordCount = formData.content
+    ? formData.content.trim().split(/\s+/).filter(Boolean).length
+    : 0;
+  const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
   return (
     <div className="space-y-6">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -157,9 +309,23 @@ export default function AdminBlogsPage() {
             Write tech articles, engineering thoughts, tutorials, and development updates
           </p>
         </div>
-        <Button variant="primary" size="sm" onClick={openCreate}>
-          <Plus className="w-4 h-4 mr-1.5" /> Write Article
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              openCreate();
+              setTimeout(() => {
+                handlePasteFromClipboard();
+              }, 250);
+            }}
+          >
+            <Sparkles className="w-4 h-4 mr-1.5 text-blue-500" /> Smart Paste
+          </Button>
+          <Button variant="primary" size="sm" onClick={openCreate}>
+            <Plus className="w-4 h-4 mr-1.5" /> Write Article
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -173,8 +339,13 @@ export default function AdminBlogsPage() {
             No articles published yet
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
-            Write your first blog post to share your knowledge with recruiters and visitors.
+            Write your first blog post or use Smart Paste to import articles from your clipboard.
           </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <Button variant="primary" size="sm" onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-1.5" /> Write Article
+            </Button>
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -253,14 +424,73 @@ export default function AdminBlogsPage() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Editor Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editingBlog ? "Edit Article" : "Write New Article"}
-        maxWidth="2xl"
+        maxWidth="4xl"
       >
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-5">
+          {/* Smart Paste & File Import Toolbar */}
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border transition-colors"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--theme-primary) 8%, transparent)",
+              borderColor: "color-mix(in srgb, var(--theme-primary) 25%, transparent)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="p-1.5 rounded-lg"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
+                  color: "var(--theme-primary)",
+                }}
+              >
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold" style={{ color: "var(--theme-text)" }}>
+                  Smart Article Importer
+                </span>
+                <span className="text-[11px] opacity-70" style={{ color: "var(--theme-text)" }}>
+                  Paste any copied article or upload a file — Title, Slug, & Summary are auto-extracted
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePasteFromClipboard}
+                className="text-xs cursor-pointer"
+              >
+                <ClipboardPaste className="w-3.5 h-3.5 mr-1.5" />
+                Paste from Clipboard
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs cursor-pointer"
+              >
+                <Upload className="w-3.5 h-3.5 mr-1.5" />
+                Upload .md / .txt
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".md,.markdown,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
+          </div>
+
           <ImageUpload
             label="Cover Image"
             folder="blogs"
@@ -274,20 +504,30 @@ export default function AdminBlogsPage() {
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Article Title *"
-              value={formData.title || ""}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="How We Scaled Next.js to 1M Users"
-              required
-            />
+            <div>
+              <Input
+                label="Article Title *"
+                value={formData.title || ""}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                onPaste={handleTitlePaste}
+                placeholder="e.g. Scaling Next.js 16 to 1M Users"
+                required
+              />
+              <span className="text-[10px] opacity-50 block mt-1" style={{ color: "var(--theme-text)" }}>
+                Tip: Pasting a full article here auto-populates Title, Slug, Excerpt & Content.
+              </span>
+            </div>
+
             <Input
               label="Slug *"
               value={formData.slug || ""}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, slug: e.target.value }))
+                setFormData((prev) => ({
+                  ...prev,
+                  slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
+                }))
               }
-              placeholder="how-we-scaled-nextjs"
+              placeholder="scaling-nextjs-16"
               required
             />
           </div>
@@ -299,20 +539,143 @@ export default function AdminBlogsPage() {
               setFormData((prev) => ({ ...prev, excerpt: e.target.value }))
             }
             rows={2}
-            placeholder="A short punchy intro displayed on article cards..."
+            placeholder="A short punchy intro displayed on article cards (1-2 sentences)..."
           />
 
-          <Textarea
-            label="Content (Supports Markdown / Text)"
-            value={formData.content || ""}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, content: e.target.value }))
-            }
-            rows={8}
-            placeholder="Write your article in markdown or plain text..."
-          />
+          {/* Content Area with Toolbar and Tabs */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label
+                className="text-xs font-semibold tracking-wide opacity-80"
+                style={{ color: "var(--theme-text)" }}
+              >
+                Article Content (Supports Markdown & Plain Text)
+              </label>
 
-          <label className="flex items-center gap-2 cursor-pointer pt-2">
+              <div className="flex items-center gap-2">
+                {/* Word Counter */}
+                <span
+                  className="text-[11px] font-mono px-2.5 py-1 rounded-lg border opacity-75"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--theme-text) 12%, transparent)",
+                    color: "var(--theme-text)",
+                  }}
+                >
+                  {wordCount.toLocaleString()} words • ~{readMinutes} min read
+                </span>
+
+                {/* Quick Paste into Content button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      if (text) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          content: prev.content ? `${prev.content}\n\n${text}` : text,
+                        }));
+                        toast.success("Pasted clipboard text into content!");
+                      }
+                    } catch {
+                      toast.info("Press Ctrl+V to paste.");
+                    }
+                  }}
+                  className="text-xs h-7 px-2 cursor-pointer"
+                >
+                  <ClipboardPaste className="w-3.5 h-3.5 mr-1" /> Paste Here
+                </Button>
+
+                {/* Write / Preview Tab Switcher */}
+                <div
+                  className="flex items-center p-0.5 rounded-xl border"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, var(--theme-surface) 80%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--theme-text) 12%, transparent)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("write")}
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                      activeTab === "write"
+                        ? "shadow-sm font-bold"
+                        : "opacity-60 hover:opacity-100"
+                    }`}
+                    style={
+                      activeTab === "write"
+                        ? {
+                            backgroundColor: "var(--theme-primary)",
+                            color: "#ffffff",
+                          }
+                        : { color: "var(--theme-text)" }
+                    }
+                  >
+                    Write
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("preview")}
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                      activeTab === "preview"
+                        ? "shadow-sm font-bold"
+                        : "opacity-60 hover:opacity-100"
+                    }`}
+                    style={
+                      activeTab === "preview"
+                        ? {
+                            backgroundColor: "var(--theme-primary)",
+                            color: "#ffffff",
+                          }
+                        : { color: "var(--theme-text)" }
+                    }
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Write View */}
+            {activeTab === "write" ? (
+              <Textarea
+                value={formData.content || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, content: e.target.value }))
+                }
+                onPaste={handleContentPaste}
+                rows={13}
+                placeholder="Paste or write your article here... Markdown headings (#), lists, code blocks (```), and paragraphs are fully supported."
+                className="font-mono text-xs sm:text-sm leading-relaxed"
+              />
+            ) : (
+              /* Live Markdown Preview */
+              <div
+                className="w-full min-h-[280px] max-h-[380px] overflow-y-auto p-4 rounded-xl border text-left space-y-3"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--theme-surface) 65%, transparent)",
+                  borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                {formData.content ? (
+                  <div className="space-y-3 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed opacity-90">
+                    {formData.content}
+                  </div>
+                ) : (
+                  <div className="text-xs opacity-50 italic py-10 text-center">
+                    Nothing to preview yet. Switch to Write tab and paste your content.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Publish Checkbox */}
+          <label className="flex items-center gap-2.5 cursor-pointer pt-1">
             <input
               type="checkbox"
               checked={formData.is_published || false}
@@ -322,24 +685,48 @@ export default function AdminBlogsPage() {
                   is_published: e.target.checked,
                 }))
               }
-              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              Published (Visible on public portfolio)
+            <span
+              className="text-xs font-semibold"
+              style={{ color: "var(--theme-text)" }}
+            >
+              Published (Immediately visible on public portfolio)
             </span>
           </label>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" isLoading={saving}>
-              {editingBlog ? "Update Article" : "Publish Article"}
-            </Button>
+          {/* Action Buttons */}
+          <div
+            className="flex items-center justify-between pt-4 border-t"
+            style={{ borderColor: "color-mix(in srgb, var(--theme-text) 8%, transparent)" }}
+          >
+            {formData.content && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Clear all article content?")) {
+                    setFormData((prev) => ({ ...prev, content: "", excerpt: "" }));
+                  }
+                }}
+                className="text-xs opacity-70 hover:opacity-100 text-red-500 hover:text-red-600 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset Content
+              </Button>
+            )}
+            <div className="flex items-center gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" isLoading={saving}>
+                {editingBlog ? "Update Article" : "Publish Article"}
+              </Button>
+            </div>
           </div>
         </form>
       </Modal>
