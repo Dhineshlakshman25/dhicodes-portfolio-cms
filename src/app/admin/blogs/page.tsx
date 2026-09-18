@@ -16,7 +16,7 @@ import {
   Sparkles,
   Upload,
   BookOpen,
-  Check,
+  Wand2,
   RotateCcw,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
@@ -27,6 +27,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { autoFormatBlogArticle } from "@/lib/blog-formatter";
 import { toast } from "sonner";
 import dayjs from "dayjs";
 
@@ -98,7 +100,7 @@ export default function AdminBlogsPage() {
   };
 
   /**
-   * Smart Parser: Extracts Title, Slug, Excerpt, and Full Content from raw pasted text/markdown
+   * Apply Intelligent Auto-Formatter to pasted article
    */
   const applyPastedArticle = (rawText: string) => {
     if (!rawText || rawText.trim() === "") {
@@ -106,52 +108,19 @@ export default function AdminBlogsPage() {
       return;
     }
 
-    const cleanText = rawText.replace(/\r\n/g, "\n");
-    const lines = cleanText.split("\n");
-    const nonEmptyLines = lines.map((l) => l.trim()).filter(Boolean);
-
-    if (nonEmptyLines.length === 0) {
-      toast.error("No valid text found in article.");
-      return;
-    }
-
-    // 1. Extract Title (first line, stripping markdown hashes or bullet symbols)
-    const firstLine = nonEmptyLines[0].replace(/^[#*>\-\s]+/, "").trim();
-    const extractedTitle = firstLine.slice(0, 150);
-
-    // 2. Generate clean URL slug
-    const extractedSlug = extractedTitle
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 80);
-
-    // 3. Extract Excerpt (next line that isn't a heading)
-    let extractedExcerpt = "";
-    for (let i = 1; i < nonEmptyLines.length; i++) {
-      const line = nonEmptyLines[i];
-      if (!line.startsWith("#") && line.length > 20) {
-        extractedExcerpt = line.replace(/^[#*>\-\s]+/, "").trim().slice(0, 200);
-        break;
-      }
-    }
-    if (!extractedExcerpt && nonEmptyLines.length > 1) {
-      extractedExcerpt = nonEmptyLines[1].replace(/^[#*>\-\s]+/, "").trim().slice(0, 200);
-    }
-    if (!extractedExcerpt) {
-      extractedExcerpt = extractedTitle.slice(0, 120);
-    }
+    const formatted = autoFormatBlogArticle(rawText);
 
     setFormData((prev) => ({
       ...prev,
-      title: prev.title && prev.title.trim() !== "" ? prev.title : extractedTitle,
-      slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : extractedSlug,
-      excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : extractedExcerpt,
-      content: cleanText,
+      title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
+      slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
+      excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
+      content: formatted.content,
     }));
 
-    const wordCount = cleanText.trim().split(/\s+/).filter(Boolean).length;
-    toast.success(`✨ Article imported! (${wordCount} words, Title, Slug & Excerpt populated)`);
+    toast.success(
+      `✨ Article auto-formatted! (${formatted.wordCount} words • ~${formatted.readMinutes} min read)`
+    );
   };
 
   /**
@@ -166,8 +135,27 @@ export default function AdminBlogsPage() {
       }
       applyPastedArticle(text);
     } catch {
-      toast.info("Please use Ctrl+V / Command+V to paste your article directly into the Content box.");
+      toast.info("Please use Ctrl+V to paste your article directly into the Content box.");
     }
+  };
+
+  /**
+   * Manual trigger to auto-format existing content
+   */
+  const handleAutoFormatContent = () => {
+    if (!formData.content || formData.content.trim() === "") {
+      toast.error("Content is empty! Write or paste text first.");
+      return;
+    }
+    const formatted = autoFormatBlogArticle(formData.content);
+    setFormData((prev) => ({
+      ...prev,
+      content: formatted.content,
+      title: prev.title || formatted.title,
+      slug: prev.slug || formatted.slug,
+      excerpt: prev.excerpt || formatted.excerpt,
+    }));
+    toast.success("✨ Content beautified & structured into clean Markdown!");
   };
 
   /**
@@ -193,15 +181,14 @@ export default function AdminBlogsPage() {
    */
   const handleTitlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pasted = e.clipboardData.getData("text");
-    if (pasted && (pasted.includes("\n") || pasted.length > 150)) {
+    if (pasted && (pasted.includes("\n") || pasted.length > 120)) {
       e.preventDefault();
       applyPastedArticle(pasted);
     }
   };
 
   const handleTitleChange = (val: string) => {
-    // If user pasted multi-line text into input
-    if (val.includes("\n") || (val.length > 200 && val.includes(" "))) {
+    if (val.includes("\n") || (val.length > 180 && val.includes(" "))) {
       applyPastedArticle(val);
       return;
     }
@@ -220,29 +207,23 @@ export default function AdminBlogsPage() {
   };
 
   /**
-   * Content paste handler: if title is empty, automatically auto-fill metadata
+   * Content paste handler: auto-formats pasted text and auto-fills title/slug if missing
    */
   const handleContentPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const pasted = e.clipboardData.getData("text/plain");
-    if (pasted && (!formData.title || formData.title.trim() === "")) {
-      const lines = pasted.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-      if (lines.length > 0) {
-        const titleCandidate = lines[0].replace(/^[#*>\-\s]+/, "").trim().slice(0, 150);
-        const slugCandidate = titleCandidate
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .slice(0, 80);
-        const excerptCandidate = lines.length > 1 ? lines[1].replace(/^[#*>\-\s]+/, "").trim().slice(0, 200) : "";
+    if (pasted && pasted.length > 60) {
+      e.preventDefault();
+      const formatted = autoFormatBlogArticle(pasted);
 
-        setFormData((prev) => ({
-          ...prev,
-          title: prev.title || titleCandidate,
-          slug: prev.slug || slugCandidate,
-          excerpt: prev.excerpt || excerptCandidate,
-        }));
-        toast.info("Auto-filled Title and Slug from your pasted content!");
-      }
+      setFormData((prev) => ({
+        ...prev,
+        content: prev.content ? `${prev.content}\n\n${formatted.content}` : formatted.content,
+        title: prev.title && prev.title.trim() !== "" ? prev.title : formatted.title,
+        slug: prev.slug && prev.slug.trim() !== "" ? prev.slug : formatted.slug,
+        excerpt: prev.excerpt && prev.excerpt.trim() !== "" ? prev.excerpt : formatted.excerpt,
+      }));
+
+      toast.success("✨ Automatically formatted pasted article into clean Markdown!");
     }
   };
 
@@ -320,7 +301,7 @@ export default function AdminBlogsPage() {
               }, 250);
             }}
           >
-            <Sparkles className="w-4 h-4 mr-1.5 text-blue-500" /> Smart Paste
+            <Sparkles className="w-4 h-4 mr-1.5 text-blue-500" /> Smart Paste & Format
           </Button>
           <Button variant="primary" size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-1.5" /> Write Article
@@ -339,7 +320,7 @@ export default function AdminBlogsPage() {
             No articles published yet
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
-            Write your first blog post or use Smart Paste to import articles from your clipboard.
+            Write your first blog post or use Smart Paste to import and auto-format articles from your clipboard.
           </p>
           <div className="mt-4 flex justify-center gap-2">
             <Button variant="primary" size="sm" onClick={openCreate}>
@@ -432,7 +413,7 @@ export default function AdminBlogsPage() {
         maxWidth="4xl"
       >
         <form onSubmit={handleSave} className="space-y-5">
-          {/* Smart Paste & File Import Toolbar */}
+          {/* Smart Paste & Auto-Format Toolbar */}
           <div
             className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border transition-colors"
             style={{
@@ -440,22 +421,22 @@ export default function AdminBlogsPage() {
               borderColor: "color-mix(in srgb, var(--theme-primary) 25%, transparent)",
             }}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div
-                className="p-1.5 rounded-lg"
+                className="p-2 rounded-xl"
                 style={{
                   backgroundColor: "color-mix(in srgb, var(--theme-primary) 20%, transparent)",
                   color: "var(--theme-primary)",
                 }}
               >
-                <Sparkles className="w-4 h-4" />
+                <Wand2 className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-bold" style={{ color: "var(--theme-text)" }}>
-                  Smart Article Importer
+                  Smart Auto-Formatter & Importer
                 </span>
                 <span className="text-[11px] opacity-70" style={{ color: "var(--theme-text)" }}>
-                  Paste any copied article or upload a file — Title, Slug, & Summary are auto-extracted
+                  Pastes any article with auto-detected Markdown headings, code blocks, lists, and summary
                 </span>
               </div>
             </div>
@@ -514,7 +495,7 @@ export default function AdminBlogsPage() {
                 required
               />
               <span className="text-[10px] opacity-50 block mt-1" style={{ color: "var(--theme-text)" }}>
-                Tip: Pasting a full article here auto-populates Title, Slug, Excerpt & Content.
+                Tip: Pasting a full article here automatically populates and formats the entire form.
               </span>
             </div>
 
@@ -542,7 +523,7 @@ export default function AdminBlogsPage() {
             placeholder="A short punchy intro displayed on article cards (1-2 sentences)..."
           />
 
-          {/* Content Area with Toolbar and Tabs */}
+          {/* Content Area with Toolbar, Auto-Format Action, and Tabs */}
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label
@@ -565,6 +546,18 @@ export default function AdminBlogsPage() {
                   {wordCount.toLocaleString()} words • ~{readMinutes} min read
                 </span>
 
+                {/* 🪄 Auto-Format Content Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAutoFormatContent}
+                  className="text-xs h-7 px-2.5 text-blue-500 hover:text-blue-600 cursor-pointer"
+                  title="Auto-format headings, code blocks, lists, and spacing"
+                >
+                  <Wand2 className="w-3.5 h-3.5 mr-1 text-blue-500" /> Auto-Format
+                </Button>
+
                 {/* Quick Paste into Content button */}
                 <Button
                   type="button"
@@ -574,11 +567,7 @@ export default function AdminBlogsPage() {
                     try {
                       const text = await navigator.clipboard.readText();
                       if (text) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          content: prev.content ? `${prev.content}\n\n${text}` : text,
-                        }));
-                        toast.success("Pasted clipboard text into content!");
+                        applyPastedArticle(text);
                       }
                     } catch {
                       toast.info("Press Ctrl+V to paste.");
@@ -648,26 +637,23 @@ export default function AdminBlogsPage() {
                 }
                 onPaste={handleContentPaste}
                 rows={13}
-                placeholder="Paste or write your article here... Markdown headings (#), lists, code blocks (```), and paragraphs are fully supported."
+                placeholder="Paste or write your article here... Headings (#), lists, code blocks (```), blockquotes (>), and bold text are automatically formatted."
                 className="font-mono text-xs sm:text-sm leading-relaxed"
               />
             ) : (
-              /* Live Markdown Preview */
+              /* Live Markdown Preview with real typography, code highlighting, blockquotes & lists */
               <div
-                className="w-full min-h-[280px] max-h-[380px] overflow-y-auto p-4 rounded-xl border text-left space-y-3"
+                className="w-full min-h-[300px] max-h-[450px] overflow-y-auto p-6 rounded-2xl border text-left"
                 style={{
                   backgroundColor: "color-mix(in srgb, var(--theme-surface) 65%, transparent)",
                   borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
-                  color: "var(--theme-text)",
                 }}
               >
                 {formData.content ? (
-                  <div className="space-y-3 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed opacity-90">
-                    {formData.content}
-                  </div>
+                  <MarkdownRenderer content={formData.content} />
                 ) : (
-                  <div className="text-xs opacity-50 italic py-10 text-center">
-                    Nothing to preview yet. Switch to Write tab and paste your content.
+                  <div className="text-xs opacity-50 italic py-12 text-center">
+                    Nothing to preview yet. Switch to Write tab or click &quot;Paste from Clipboard&quot;.
                   </div>
                 )}
               </div>

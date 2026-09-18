@@ -5,6 +5,7 @@ import { SafeImage } from "@/components/ui/SafeImage";
 import { FileText, Calendar, ArrowRight, X, Clock, BookOpen } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import dayjs from "dayjs";
 
 interface Blog {
@@ -121,7 +122,7 @@ export function BlogSection({ blogs = [] }: BlogSectionProps) {
             ? dayjs(selectedBlog.published_at).format("MMMM DD, YYYY")
             : undefined
         }
-        maxWidth="2xl"
+        maxWidth="4xl"
       >
         {selectedBlog && (
           <div className="space-y-6">
@@ -148,8 +149,8 @@ export function BlogSection({ blogs = [] }: BlogSectionProps) {
               </div>
             )}
 
-            <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap opacity-90 text-[var(--theme-text)] space-y-3">
-              {selectedBlog.content || "No content written yet."}
+            <div className="pt-2">
+              <MarkdownRenderer content={selectedBlog.content || ""} />
             </div>
 
             <div className="flex justify-end pt-4 border-t border-white/10">
