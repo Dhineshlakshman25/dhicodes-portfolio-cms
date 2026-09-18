@@ -40,11 +40,23 @@ export class PrismaProjectImageRepository
     id: number,
     data: Partial<ProjectImage>
   ): Promise<ProjectImage> {
+    const {
+      id: _id,
+      projects: _p,
+      ...cleanData
+    } = data as any;
+
     return prisma.project_images.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...cleanData,
+        display_order:
+          cleanData.display_order !== undefined
+            ? Number(cleanData.display_order)
+            : undefined,
+      },
     });
   }
 

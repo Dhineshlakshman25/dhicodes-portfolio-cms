@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { GetBlogsUseCase } from "../../application/use-cases/GetBlogsUseCase";
+import { GetBlogBySlugUseCase } from "../../application/use-cases/GetBlogBySlugUseCase";
 import { CreateBlogUseCase } from "../../application/use-cases/CreateBlogUseCase";
 import { UpdateBlogUseCase } from "../../application/use-cases/UpdateBlogUseCase";
 import { DeleteBlogUseCase } from "../../application/use-cases/DeleteBlogUseCase";
@@ -11,6 +12,27 @@ export class BlogController {
   async get() {
     const data =
       await new GetBlogsUseCase().execute();
+
+    return NextResponse.json({
+      success: true,
+      data,
+    });
+  }
+
+  async getBySlug(slug: string) {
+    const data = await new GetBlogBySlugUseCase().execute(slug);
+
+    if (!data) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Blog not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
 
     return NextResponse.json({
       success: true,

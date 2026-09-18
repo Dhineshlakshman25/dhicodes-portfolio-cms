@@ -3,6 +3,10 @@ import { Blog } from "../entities/Blog";
 export interface IBlogRepository {
   getAll(): Promise<Blog[]>;
 
+
+
+  getBySlug(slug: string): Promise<Blog | null>;
+
   create(
     data: Partial<Blog>
   ): Promise<Blog>;

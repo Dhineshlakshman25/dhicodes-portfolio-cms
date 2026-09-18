@@ -46,11 +46,33 @@ export class PrismaProfileRepository
     id: string,
     data: Partial<Profile>
   ): Promise<Profile> {
-    return prisma.profiles.update({
+    const existing = await prisma.profiles.findFirst();
+    const targetId = existing?.id || id || "profile-1";
+    const {
+      id: _id,
+      created_at: _cat,
+      updated_at: _uat,
+      ...cleanData
+    } = data as any;
+
+    const payload = {
+      ...cleanData,
+      years_experience:
+        cleanData.years_experience !== undefined
+          ? Number(cleanData.years_experience)
+          : undefined,
+    };
+
+    return prisma.profiles.upsert({
       where: {
-        id,
+        id: targetId,
       },
-      data,
+      update: payload,
+      create: {
+        id: targetId,
+        name: cleanData.name || "Portfolio Owner",
+        ...payload,
+      },
     });
   }
 }

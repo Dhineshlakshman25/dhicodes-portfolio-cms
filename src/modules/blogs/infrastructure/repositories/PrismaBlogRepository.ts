@@ -14,6 +14,14 @@ export class PrismaBlogRepository
     });
   }
 
+  async getBySlug(slug: string): Promise<Blog | null> {
+    return prisma.blogs.findUnique({
+      where: {
+        slug,
+      },
+    });
+  }
+
   async create(
     data: Partial<Blog>
   ): Promise<Blog> {
@@ -34,11 +42,30 @@ export class PrismaBlogRepository
     id: number,
     data: Partial<Blog>
   ): Promise<Blog> {
+    const {
+      id: _id,
+      created_at: _cat,
+      updated_at: _uat,
+      ...cleanData
+    } = data as any;
+
     return prisma.blogs.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...cleanData,
+        is_published:
+          cleanData.is_published !== undefined
+            ? Boolean(cleanData.is_published)
+            : undefined,
+        published_at:
+          cleanData.published_at
+            ? new Date(cleanData.published_at)
+            : cleanData.published_at === null
+            ? null
+            : undefined,
+      },
     });
   }
 

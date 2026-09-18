@@ -1,40 +1,23 @@
 import { comparePassword } from "@/infrastructure/auth/password";
 import { generateToken } from "@/infrastructure/auth/jwt";
-
+import { prisma } from "@/infrastructure/database/prisma";
 import { LoginResponseDto } from "../dto/LoginResponseDto";
 import { PrismaUserRepository } from "../../infrastructure/repositories/PrismaUserRepository";
 
 export class LoginUseCase {
-  private readonly repository =
-    new PrismaUserRepository();
+  private readonly repository = new PrismaUserRepository();
 
   async execute(
     email: string,
     password: string
   ): Promise<LoginResponseDto> {
-    const dbUser =
-      await this.repository.findByEmail(email);
-
-    if (!dbUser) {
-      throw new Error("Invalid credentials");
-    }
-
-    const prismaUser =
-      await this.repository.findByEmail(email);
-
-    if (!prismaUser) {
-      throw new Error("Invalid credentials");
-    }
-
-    const userRecord = await (
-      await import("@/infrastructure/database/prisma")
-    ).prisma.users.findUnique({
+    const userRecord = await prisma.users.findUnique({
       where: {
         email,
       },
     });
 
-    if (!userRecord) {
+    if (!userRecord || userRecord.is_active === false) {
       throw new Error("Invalid credentials");
     }
 
@@ -66,4 +49,4 @@ export class LoginUseCase {
       },
     };
   }
-}
+}

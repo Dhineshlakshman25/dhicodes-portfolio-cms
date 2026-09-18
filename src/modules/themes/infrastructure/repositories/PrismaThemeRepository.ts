@@ -17,11 +17,20 @@ export class PrismaThemeRepository
   async create(
     data: Partial<Theme>
   ): Promise<Theme> {
+    const id = data.id || crypto.randomUUID();
+    const slug =
+      data.slug ||
+      data.name
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") ||
+      id;
+
     return prisma.themes.create({
       data: {
-        id: data.id!,
+        id,
         name: data.name!,
-        slug: data.slug!,
+        slug,
 
         description:
           data.description,
@@ -63,11 +72,45 @@ export class PrismaThemeRepository
     id: string,
     data: Partial<Theme>
   ): Promise<Theme> {
+    const {
+      id: _id,
+      created_at: _cat,
+      updated_at: _uat,
+      ...cleanData
+    } = data as any;
+
+    if (cleanData.is_default) {
+      // Unset default on others
+      await prisma.themes.updateMany({
+        where: { id: { not: id } },
+        data: { is_default: false },
+      });
+
+      // Synchronize with site_settings.active_theme_id
+      const siteSettings = await prisma.site_settings.findFirst();
+      if (siteSettings) {
+        await prisma.site_settings.update({
+          where: { id: siteSettings.id },
+          data: { active_theme_id: id },
+        });
+      }
+    }
+
     return prisma.themes.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...cleanData,
+        is_default:
+          cleanData.is_default !== undefined
+            ? Boolean(cleanData.is_default)
+            : undefined,
+        is_active:
+          cleanData.is_active !== undefined
+            ? Boolean(cleanData.is_active)
+            : undefined,
+      },
     });
   }
 

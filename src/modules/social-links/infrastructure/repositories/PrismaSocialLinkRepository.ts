@@ -36,11 +36,28 @@ export class PrismaSocialLinkRepository
     id: number,
     data: Partial<SocialLink>
   ): Promise<SocialLink> {
+    const {
+      id: _id,
+      created_at: _cat,
+      updated_at: _uat,
+      ...cleanData
+    } = data as any;
+
     return prisma.social_links.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...cleanData,
+        display_order:
+          cleanData.display_order !== undefined
+            ? Number(cleanData.display_order)
+            : undefined,
+        is_active:
+          cleanData.is_active !== undefined
+            ? Boolean(cleanData.is_active)
+            : undefined,
+      },
     });
   }
 

@@ -34,11 +34,17 @@ export class PrismaProjectFeatureRepository
     id: number,
     data: Partial<ProjectFeature>
   ): Promise<ProjectFeature> {
+    const {
+      id: _id,
+      projects: _p,
+      ...cleanData
+    } = data as any;
+
     return prisma.project_features.update({
       where: {
         id,
       },
-      data,
+      data: cleanData,
     });
   }
 

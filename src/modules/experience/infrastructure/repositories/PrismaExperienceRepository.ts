@@ -63,25 +63,43 @@ export class PrismaExperienceRepository
     id: number,
     data: Partial<Experience>
   ): Promise<Experience> {
+    const {
+      id: _id,
+      created_at: _cat,
+      ...cleanData
+    } = data as any;
+
     return prisma.experience.update({
       where: {
         id,
       },
       data: {
-        ...data,
+        ...cleanData,
+
+        is_current:
+          cleanData.is_current !== undefined
+            ? Boolean(cleanData.is_current)
+            : undefined,
+
+        display_order:
+          cleanData.display_order !== undefined
+            ? Number(cleanData.display_order)
+            : undefined,
 
         start_date:
-          data.start_date
+          cleanData.start_date
             ? new Date(
-                data.start_date as Date
+                cleanData.start_date as Date
               )
             : undefined,
 
         end_date:
-          data.end_date
+          cleanData.end_date
             ? new Date(
-                data.end_date as Date
+                cleanData.end_date as Date
               )
+            : cleanData.end_date === null
+            ? null
             : undefined,
       },
     });

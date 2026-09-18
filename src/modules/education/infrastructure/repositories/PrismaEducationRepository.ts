@@ -61,25 +61,38 @@ export class PrismaEducationRepository
     id: number,
     data: Partial<Education>
   ): Promise<Education> {
+    const {
+      id: _id,
+      created_at: _cat,
+      ...cleanData
+    } = data as any;
+
     return prisma.education.update({
       where: {
         id,
       },
       data: {
-        ...data,
+        ...cleanData,
+
+        display_order:
+          cleanData.display_order !== undefined
+            ? Number(cleanData.display_order)
+            : undefined,
 
         start_date:
-          data.start_date
+          cleanData.start_date
             ? new Date(
-                data.start_date
+                cleanData.start_date
               )
             : undefined,
 
         end_date:
-          data.end_date
+          cleanData.end_date
             ? new Date(
-                data.end_date
+                cleanData.end_date
               )
+            : cleanData.end_date === null
+            ? null
             : undefined,
       },
     });

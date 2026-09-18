@@ -15,28 +15,60 @@ export class AuthController {
     email: string;
     password: string;
   }) {
-    const result = await new LoginUseCase().execute(
-      body.email,
-      body.password
-    );
+    try {
+      const result = await new LoginUseCase().execute(
+        body.email,
+        body.password
+      );
 
-    await setSession(result.token);
+      await setSession(result.token);
 
-    return NextResponse.json({
-      success: true,
-      data: result,
-    });
+      const response = NextResponse.json({
+        success: true,
+        data: result,
+      });
+
+      response.cookies.set("portfolio_token", result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+
+      return response;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Invalid credentials";
+
+      return NextResponse.json(
+        {
+          success: false,
+          message,
+        },
+        {
+          status: 401,
+        }
+      );
+    }
   }
+
 
   async logout() {
     await new LogoutUseCase().execute();
 
     await removeSession();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: "Logged out successfully",
     });
+
+    response.cookies.delete("portfolio_token");
+
+    return response;
   }
 
   async me() {

@@ -1,29 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(
-  request: NextRequest
-) {
-  const pathname =
-    request.nextUrl.pathname;
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const token = request.cookies.get("portfolio_token")?.value;
 
-  const isProtected =
-    pathname.startsWith(
-      "/api/admin"
-    ) ||
-    pathname === "/api/auth/me" ||
-    pathname ===
-      "/api/auth/logout";
-
-  if (!isProtected) {
-    return NextResponse.next();
+  // Protect Admin UI pages (except /admin/login)
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    if (!token) {
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  const token =
-    request.cookies.get(
-      "portfolio_token"
-    )?.value;
+  // Redirect to dashboard if already logged in and accessing /admin/login
+  if (pathname === "/admin/login" && token) {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  }
 
-  if (!token) {
+  // Protect Admin API routes and auth me/logout
+  const isProtectedApi =
+    pathname.startsWith("/api/admin") ||
+    pathname === "/api/auth/me" ||
+    pathname === "/api/auth/logout";
+
+  if (isProtectedApi && !token) {
     return NextResponse.json(
       {
         success: false,
@@ -39,5 +40,5 @@ export function middleware(
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
-};
+  matcher: ["/admin/:path*", "/api/:path*"],
+};

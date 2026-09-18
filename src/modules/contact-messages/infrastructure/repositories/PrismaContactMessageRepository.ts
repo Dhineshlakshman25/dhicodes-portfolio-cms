@@ -32,11 +32,23 @@ export class PrismaContactMessageRepository
     id: number,
     data: Partial<ContactMessage>
   ): Promise<ContactMessage> {
+    const {
+      id: _id,
+      created_at: _cat,
+      ...cleanData
+    } = data as any;
+
     return prisma.contact_messages.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...cleanData,
+        is_read:
+          cleanData.is_read !== undefined
+            ? Boolean(cleanData.is_read)
+            : undefined,
+      },
     });
   }
 

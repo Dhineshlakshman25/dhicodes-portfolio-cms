@@ -48,18 +48,27 @@ export class PrismaCertificationRepository
     id: number,
     data: Partial<Certification>
   ): Promise<Certification> {
+    const {
+      id: _id,
+      created_at: _cat,
+      updated_at: _uat,
+      ...cleanData
+    } = data as any;
+
     return prisma.certifications.update({
       where: {
         id,
       },
       data: {
-        ...data,
+        ...cleanData,
 
         issue_date:
-          data.issue_date
+          cleanData.issue_date
             ? new Date(
-                data.issue_date
+                cleanData.issue_date
               )
+            : cleanData.issue_date === null
+            ? null
             : undefined,
       },
     });

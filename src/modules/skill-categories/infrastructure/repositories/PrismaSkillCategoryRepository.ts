@@ -32,11 +32,23 @@ export class PrismaSkillCategoryRepository
     id: number,
     data: Partial<SkillCategory>
   ): Promise<SkillCategory> {
+    const {
+      id: _id,
+      skills: _s,
+      ...cleanData
+    } = data as any;
+
     return prisma.skill_categories.update({
       where: {
         id,
       },
-      data,
+      data: {
+        ...cleanData,
+        display_order:
+          cleanData.display_order !== undefined
+            ? Number(cleanData.display_order)
+            : undefined,
+      },
     });
   }
 
