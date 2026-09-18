@@ -154,7 +154,7 @@ export function HeroSection({ profile, socialLinks = [] }: HeroSectionProps) {
               style={{ backgroundColor: "var(--theme-accent, #10b981)" }}
             />
           </span>
-          <span className="opacity-90">Open for Senior Engineering Roles & Architecture Projects</span>
+          <span className="opacity-90">Open to Full-Time Roles • Freelance • Engineering Projects</span>
         </div>
 
         {/* Profile Card with Cover Banner & Floating Avatar */}
