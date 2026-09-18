@@ -25,7 +25,7 @@ export default function AdminLoginPage() {
 
     try {
       setLoading(true);
-      await login(email, password);
+      await login(email.trim(), password);
       toast.success("Welcome back, Admin!");
       router.push("/admin/dashboard");
       router.refresh();
@@ -100,7 +100,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@portfolio.com"
+                  placeholder="dhineshlakshman2552@gmail.com"
                   className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border outline-none transition"
                   style={{
                     backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
@@ -157,19 +157,6 @@ export default function AdminLoginPage() {
               ← Back to Public Portfolio
             </Link>
           </div>
-        </div>
-
-        {/* Demo Credentials Tip */}
-        <div
-          className="mt-4 p-3 rounded-2xl border text-center"
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--theme-surface) 75%, transparent)",
-            borderColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
-          }}
-        >
-          <p className="text-[11px] opacity-75">
-            Initial Demo Admin: <span className="font-mono font-bold" style={{ color: "var(--theme-text)" }}>admin@portfolio.com</span> | <span className="font-mono font-bold" style={{ color: "var(--theme-text)" }}>Admin@123456</span>
-          </p>
         </div>
       </div>
     </div>

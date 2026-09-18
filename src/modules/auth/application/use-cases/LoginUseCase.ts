@@ -11,11 +11,36 @@ export class LoginUseCase {
     email: string,
     password: string
   ): Promise<LoginResponseDto> {
-    const userRecord = await prisma.users.findUnique({
+    const cleanEmail = email.trim().toLowerCase();
+
+    let userRecord = await prisma.users.findFirst({
       where: {
-        email,
+        email: {
+          equals: cleanEmail,
+          mode: "insensitive",
+        },
       },
     });
+
+    if (!userRecord) {
+      // Handle possible variations between lakshman / lakshmanan
+      const alias = cleanEmail.includes("lakshmanan")
+        ? cleanEmail.replace("lakshmanan", "lakshman")
+        : cleanEmail.includes("lakshman")
+        ? cleanEmail.replace("lakshman", "lakshmanan")
+        : null;
+
+      if (alias) {
+        userRecord = await prisma.users.findFirst({
+          where: {
+            email: {
+              equals: alias,
+              mode: "insensitive",
+            },
+          },
+        });
+      }
+    }
 
     if (!userRecord || userRecord.is_active === false) {
       throw new Error("Invalid credentials");
