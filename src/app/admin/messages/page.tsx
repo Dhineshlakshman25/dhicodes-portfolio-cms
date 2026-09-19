@@ -10,6 +10,7 @@ import {
   Calendar,
   Reply,
   Loader2,
+  Briefcase,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -149,6 +150,11 @@ export default function AdminMessagesPage() {
                         New
                       </Badge>
                     )}
+                    {msg.subject?.includes("[Freelance Inquiry]") && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                        <Briefcase className="w-2.5 h-2.5" /> Freelance Inquiry
+                      </span>
+                    )}
                   </div>
 
                   <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
@@ -220,6 +226,17 @@ export default function AdminMessagesPage() {
       >
         {selectedMessage && (
           <div className="space-y-4">
+            {selectedMessage.subject?.includes("[Freelance Inquiry]") && (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4" /> Freelance Project Inquiry
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  Ready for Scope & Proposal
+                </span>
+              </div>
+            )}
+
             <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-zinc-900 dark:text-white">
@@ -249,7 +266,7 @@ export default function AdminMessagesPage() {
             </div>
 
             <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-              <p className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap leading-relaxed font-sans">
                 {selectedMessage.message}
               </p>
             </div>
@@ -267,11 +284,14 @@ export default function AdminMessagesPage() {
                 {selectedMessage.email && (
                   <a
                     href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(
-                      selectedMessage.subject || "Your Inquiry"
+                      selectedMessage.subject || "Your Project Inquiry"
                     )}`}
-                    className="inline-flex items-center justify-center rounded-xl font-bold transition px-3 py-1.5 text-xs bg-blue-600 text-white hover:bg-blue-500 shadow-sm"
+                    className="inline-flex items-center justify-center rounded-xl font-bold transition px-4 py-2 text-xs bg-blue-600 text-white hover:bg-blue-500 shadow-sm"
                   >
-                    <Reply className="w-3.5 h-3.5 mr-1" /> Reply via Email
+                    <Reply className="w-3.5 h-3.5 mr-1.5" />
+                    {selectedMessage.subject?.includes("[Freelance Inquiry]")
+                      ? "Send Proposal via Email"
+                      : "Reply via Email"}
                   </a>
                 )}
               </div>
