@@ -41,6 +41,7 @@ export default function AdminMessagesPage() {
       setLoading(true);
       const res = await api.get<ContactMessage[]>("/api/admin/contact-messages");
       setMessages(res || []);
+      window.dispatchEvent(new CustomEvent("messages-updated"));
     } catch (err: any) {
       toast.error(err.message || "Failed to load messages");
     } finally {
@@ -66,6 +67,7 @@ export default function AdminMessagesPage() {
           prev ? { ...prev, is_read: !prev.is_read } : null
         );
       }
+      window.dispatchEvent(new CustomEvent("messages-updated"));
       toast.success(msg.is_read ? "Marked as unread" : "Marked as read");
     } catch (err: any) {
       toast.error(err.message || "Failed to update status");
@@ -79,6 +81,7 @@ export default function AdminMessagesPage() {
       toast.success("Message deleted");
       setMessages((prev) => prev.filter((m) => m.id !== id));
       if (selectedMessage?.id === id) setSelectedMessage(null);
+      window.dispatchEvent(new CustomEvent("messages-updated"));
     } catch (err: any) {
       toast.error(err.message || "Failed to delete");
     }

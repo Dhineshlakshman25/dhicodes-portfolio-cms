@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/Button";
 import { ThemeSwitcher } from "@/components/ui/ThemeSwitcher";
 
@@ -51,6 +52,33 @@ export default function AdminLayout({
   const router = useRouter();
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number | null>(null);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get<{ unreadMessages?: number }>("/api/admin/dashboard");
+      if (typeof res?.unreadMessages === "number") {
+        setUnreadCount(res.unreadMessages);
+      }
+    } catch {
+      // Silently fail if unauthenticated or network error
+    }
+  };
+
+  React.useEffect(() => {
+    if (pathname !== "/admin/login") {
+      fetchUnreadCount();
+    }
+
+    const handleUpdate = () => {
+      fetchUnreadCount();
+    };
+
+    window.addEventListener("messages-updated", handleUpdate);
+    return () => {
+      window.removeEventListener("messages-updated", handleUpdate);
+    };
+  }, [pathname]);
 
   // If on login page, render plain layout without sidebar
   if (pathname === "/admin/login") {
@@ -130,12 +158,13 @@ export default function AdminLayout({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
+            const isMessages = item.href === "/admin/messages";
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 text-xs font-semibold rounded-xl transition-all ${
+                className={`flex items-center justify-between px-3 py-2.5 text-xs font-semibold rounded-xl transition-all ${
                   isActive
                     ? "shadow-sm"
                     : "opacity-75 hover:opacity-100 hover:bg-[color-mix(in_srgb,var(--theme-text)_8%,transparent)]"
@@ -151,11 +180,24 @@ export default function AdminLayout({
                       }
                 }
               >
-                <Icon
-                  className="w-4 h-4"
-                  style={{ color: isActive ? "#ffffff" : "var(--theme-primary)" }}
-                />
-                {item.label}
+                <div className="flex items-center gap-3">
+                  <Icon
+                    className="w-4 h-4"
+                    style={{ color: isActive ? "#ffffff" : "var(--theme-primary)" }}
+                  />
+                  {item.label}
+                </div>
+                {isMessages && unreadCount !== null && unreadCount > 0 && (
+                  <span
+                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-full transition-colors ${
+                      isActive
+                        ? "bg-white text-emerald-700 shadow-sm"
+                        : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                    }`}
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -230,6 +272,25 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Quick Messages Link with Unread Count Badge */}
+            <Link
+              href="/admin/messages"
+              className="relative p-2 rounded-xl border transition hover:scale-105 active:scale-95 flex items-center justify-center"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--theme-surface) 90%, transparent)",
+                borderColor: "color-mix(in srgb, var(--theme-text) 12%, transparent)",
+                color: "var(--theme-text)",
+              }}
+              title="Inquiries & Messages"
+            >
+              <MessageSquare className="w-4 h-4" style={{ color: "var(--theme-primary)" }} />
+              {unreadCount !== null && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-[var(--theme-surface)]">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Link>
+
             {/* Theme Switcher for Admin CMS */}
             <ThemeSwitcher />
 
