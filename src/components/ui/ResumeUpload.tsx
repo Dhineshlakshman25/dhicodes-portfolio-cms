@@ -52,7 +52,8 @@ export function ResumeUpload({
     try {
       const parts = url.split("/");
       const last = parts[parts.length - 1];
-      return decodeURIComponent(last) || "resume.pdf";
+      const decoded = decodeURIComponent(last) || "resume.pdf";
+      return decoded.replace(/\.pdf\.pdf$/i, ".pdf");
     } catch {
       return "resume.pdf";
     }

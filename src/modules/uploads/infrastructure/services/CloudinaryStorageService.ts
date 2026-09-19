@@ -20,7 +20,7 @@ export class CloudinaryStorageService
 
     const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
     const resourceType = mimeType.startsWith("image/") || isPdf ? "auto" : "raw";
-    const cleanPublicId = isPdf && !fileName.toLowerCase().endsWith(".pdf") ? `${fileName}.pdf` : fileName;
+    const cleanPublicId = fileName.replace(/\.[^/.]+$/, "");
 
     const result: UploadApiResponse =
       await cloudinary.uploader.upload(base64, {
