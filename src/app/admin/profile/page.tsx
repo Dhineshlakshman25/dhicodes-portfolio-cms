@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { ResumeUpload } from "@/components/ui/ResumeUpload";
 import { toast } from "sonner";
 import { Loader2, Save, UserCheck } from "lucide-react";
 
@@ -195,14 +196,14 @@ export default function AdminProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Contact Details & Resume */}
+        {/* Contact Details */}
         <Card>
           <CardHeader>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
-              Contact & Resume Link
+              Contact Information
             </h3>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-6">
             <Input
               label="Primary Email"
               type="email"
@@ -221,20 +222,29 @@ export default function AdminProfilePage() {
               placeholder="+1 (555) 000-0000"
             />
             <Input
-              label="Resume URL / Cloudinary Link"
-              value={profile.resume_url || ""}
-              onChange={(e) =>
-                setProfile((p) => ({ ...p, resume_url: e.target.value }))
-              }
-              placeholder="https://.../resume.pdf"
-            />
-            <Input
               label="Alternate Phone"
               value={profile.alternate_phone || ""}
               onChange={(e) =>
                 setProfile((p) => ({ ...p, alternate_phone: e.target.value }))
               }
               placeholder="+1 (555) 111-2222"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Resume / CV Document */}
+        <Card>
+          <CardHeader>
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+              Resume / Curriculum Vitae
+            </h3>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ResumeUpload
+              label="Upload Resume Document (PDF)"
+              value={profile.resume_url}
+              onChange={(url) => setProfile((p) => ({ ...p, resume_url: url }))}
+              onRemove={() => setProfile((p) => ({ ...p, resume_url: "" }))}
             />
           </CardContent>
         </Card>

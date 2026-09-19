@@ -15,10 +15,12 @@ import {
   Layers,
   Terminal,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
 import { SocialIcon, SocialLink } from "@/components/ui/SocialIcon";
+import { ResumeModal } from "@/components/public/ResumeModal";
 
 interface HeroSectionProps {
   profile?: {
@@ -59,6 +61,28 @@ const CORE_TECH_TAGS = [
 
 export function HeroSection({ profile, socialLinks = [] }: HeroSectionProps) {
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+
+  const handleDirectDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!profile?.resume_url) return;
+    const cleanName = (profile?.name || "Dhinesh_Lakshman").replace(/[^a-zA-Z0-9]/g, "_");
+    try {
+      const response = await fetch(profile.resume_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${cleanName}_Resume.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Resume download started!");
+    } catch {
+      window.open(profile.resume_url, "_blank");
+    }
+  };
 
   const name = profile?.name || "Dhinesh Lakshmanan";
   const title = profile?.title || "Full Stack Developer";
@@ -415,19 +439,32 @@ export function HeroSection({ profile, socialLinks = [] }: HeroSectionProps) {
           )}
 
           {profile?.resume_url ? (
-            <a
-              href={profile.resume_url}
-              target="_blank"
-              rel="noreferrer"
-              className="px-5 py-3 rounded-xl font-bold text-sm border flex items-center gap-2 transition hover:bg-white/5 active:scale-95 cursor-pointer"
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
-                borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
-                color: "var(--theme-text)",
-              }}
-            >
-              <FileDown className="w-4 h-4" style={{ color: "var(--theme-primary)" }} /> Download Resume
-            </a>
+            <>
+              <button
+                onClick={() => setIsResumeModalOpen(true)}
+                className="px-5 py-3 rounded-xl font-bold text-sm border flex items-center gap-2 transition hover:bg-white/5 active:scale-95 cursor-pointer shadow-sm"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
+                  borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                <Eye className="w-4 h-4" style={{ color: "var(--theme-primary)" }} /> Preview Resume
+              </button>
+
+              <button
+                onClick={handleDirectDownload}
+                className="px-5 py-3 rounded-xl font-bold text-sm border flex items-center gap-2 transition hover:bg-white/5 active:scale-95 cursor-pointer shadow-sm"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--theme-surface) 60%, transparent)",
+                  borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
+                  color: "var(--theme-text)",
+                }}
+                title="Download PDF directly to your device"
+              >
+                <FileDown className="w-4 h-4" style={{ color: "var(--theme-primary)" }} /> Download CV
+              </button>
+            </>
           ) : null}
 
           {email && (
@@ -498,6 +535,13 @@ export function HeroSection({ profile, socialLinks = [] }: HeroSectionProps) {
           </div>
         )}
       </div>
+
+      <ResumeModal
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        resumeUrl={profile?.resume_url}
+        candidateName={profile?.name || "Dhinesh Lakshman"}
+      />
     </section>
   );
 }

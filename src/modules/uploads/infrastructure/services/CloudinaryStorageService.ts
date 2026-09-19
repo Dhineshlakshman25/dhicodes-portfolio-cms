@@ -18,13 +18,15 @@ export class CloudinaryStorageService
     const base64 =
       `data:${mimeType};base64,${file.toString("base64")}`;
 
+    const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
+    const resourceType = mimeType.startsWith("image/") || isPdf ? "auto" : "raw";
+    const cleanPublicId = isPdf && !fileName.toLowerCase().endsWith(".pdf") ? `${fileName}.pdf` : fileName;
+
     const result: UploadApiResponse =
       await cloudinary.uploader.upload(base64, {
         folder: `portfolio/${folder}`,
-        public_id: fileName,
-        resource_type: mimeType.startsWith("image/")
-          ? "image"
-          : "raw",
+        public_id: cleanPublicId,
+        resource_type: resourceType,
       });
 
     return {
