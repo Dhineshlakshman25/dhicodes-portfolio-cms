@@ -23,6 +23,8 @@ import {
   Palette,
   FileCode2,
   HelpCircle,
+  Globe,
+  MessageSquare,
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -51,27 +53,27 @@ interface ContactSectionProps {
 }
 
 const PROJECT_TYPES = [
-  { id: "fullstack", label: "Full-Stack Web App", desc: "React / Next.js + Node", icon: Laptop },
-  { id: "mvp", label: "Startup MVP / SaaS", desc: "Fast prototype to market", icon: Zap },
-  { id: "backend", label: "Backend & APIs", desc: "Scalable REST / Database", icon: Server },
-  { id: "frontend", label: "UI/UX & Frontend", desc: "Modern, responsive web", icon: Palette },
-  { id: "hrms_crm", label: "Enterprise HRMS / CRM", desc: "Multi-tenant business apps", icon: Layers },
-  { id: "consulting", label: "Code Audit / Review", desc: "Architecture & optimization", icon: Code2 },
+  { id: "static_web", label: "Static Website / Landing Page", desc: "Fast, modern & responsive", icon: Globe },
+  { id: "custom_app", label: "Custom Idea / Web App", desc: "You bring idea, we build it", icon: Laptop },
+  { id: "mvp", label: "Startup MVP / Prototype", desc: "Launch to early users fast", icon: Zap },
+  { id: "frontend", label: "UI Revamp & Bug Fixes", desc: "Modernize or fix issues", icon: Palette },
+  { id: "backend", label: "API & Database Setup", desc: "Node / SQL / Integrations", icon: Server },
+  { id: "discuss", label: "Let's Discuss / Consult", desc: "Open chat on custom scope", icon: MessageSquare },
 ];
 
 const BUDGET_RANGES = [
-  { id: "tier-1", label: "< $500", sub: "₹25k - ₹50k" },
-  { id: "tier-2", label: "$500 – $1,500", sub: "₹50k - ₹1.5L" },
-  { id: "tier-3", label: "$1,500 – $3,000", sub: "₹1.5L - ₹3L" },
-  { id: "tier-4", label: "$3,000+", sub: "₹3L+ Scale" },
-  { id: "flexible", label: "Flexible", sub: "Need estimation" },
+  { id: "tier-micro", label: "< $150", sub: "₹5k - ₹15k" },
+  { id: "tier-standard", label: "$150 – $500", sub: "₹15k - ₹40k" },
+  { id: "tier-growth", label: "$500 – $1,200", sub: "₹40k - ₹1L" },
+  { id: "tier-scale", label: "$1,200+", sub: "₹1L+ Custom" },
+  { id: "flexible", label: "🤝 Flexible", sub: "Let's negotiate" },
 ];
 
 const TIMELINE_OPTIONS = [
-  { id: "asap", label: "⚡ ASAP (1–2 weeks)" },
-  { id: "1month", label: "📅 Within 1 Month" },
-  { id: "quarter", label: "🚀 2–3 Months" },
-  { id: "exploring", label: "🔍 Just Exploring" },
+  { id: "fast", label: "⚡ 1–3 Days (Quick Turnaround)" },
+  { id: "1-2weeks", label: "📅 1–2 Weeks" },
+  { id: "3-4weeks", label: "🚀 3–4 Weeks" },
+  { id: "flexible", label: "🤝 Flexible / No Rush" },
 ];
 
 const FREELANCE_GUARANTEES = [
@@ -93,9 +95,9 @@ const FREELANCE_GUARANTEES = [
 ];
 
 export function ContactSection({ profile, settings, socialLinks = [] }: ContactSectionProps) {
-  const [selectedProjectType, setSelectedProjectType] = useState("Full-Stack Web App");
-  const [selectedBudget, setSelectedBudget] = useState("$1,500 – $3,000");
-  const [selectedTimeline, setSelectedTimeline] = useState("📅 Within 1 Month");
+  const [selectedProjectType, setSelectedProjectType] = useState("Static Website / Landing Page");
+  const [selectedBudget, setSelectedBudget] = useState("$150 – $500");
+  const [selectedTimeline, setSelectedTimeline] = useState("📅 1–2 Weeks");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -221,10 +223,10 @@ ${formData.message}`;
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[var(--theme-text)]">
-            Let&apos;s Build Your Next Project
+            Have an Idea? Let&apos;s Build It Together
           </h2>
           <p className="text-sm sm:text-base opacity-75 text-[var(--theme-text)] max-w-2xl mx-auto leading-relaxed">
-            Have an idea, MVP, or enterprise application to develop? Select your requirements below for an estimate, or reach out directly.
+            From clean, high-speed static websites to custom web applications. You bring the idea, we build it. Open to projects of all sizes with flexible, negotiable pricing.
           </p>
 
           {/* Guarantees Row */}
@@ -567,6 +569,10 @@ ${formData.message}`;
                         );
                       })}
                     </div>
+
+                    <p className="text-[11px] opacity-65 text-[var(--theme-text)] pt-1">
+                      💡 Pricing is always flexible and open to negotiation based on your exact requirements and scope.
+                    </p>
                   </div>
 
                   {/* Step 3: Timeline Selection */}
