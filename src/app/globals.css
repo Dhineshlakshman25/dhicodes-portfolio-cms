@@ -3,14 +3,14 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #040d08;
-  --foreground: #ecfdf5;
-  --theme-primary: #10b981;
-  --theme-secondary: #059669;
-  --theme-accent: #34d399;
-  --theme-bg: #040d08;
-  --theme-surface: #0b1a11;
-  --theme-text: #ecfdf5;
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --theme-primary: #38bdf8;
+  --theme-secondary: #6366f1;
+  --theme-accent: #10b981;
+  --theme-bg: #090d16;
+  --theme-surface: #111827;
+  --theme-text: #f8fafc;
   --theme-font: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   color-scheme: dark;
 }

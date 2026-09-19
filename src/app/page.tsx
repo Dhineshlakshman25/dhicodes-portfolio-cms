@@ -195,10 +195,10 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#090d16] text-[#f8fafc]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
-          <span className="text-xs font-semibold tracking-wider uppercase opacity-70">
+          <Loader2 className="w-10 h-10 animate-spin text-[#38bdf8]" />
+          <span className="text-xs font-semibold tracking-wider uppercase opacity-70 text-[#f8fafc]">
             Initializing Portfolio & Theme Engine...
           </span>
         </div>
