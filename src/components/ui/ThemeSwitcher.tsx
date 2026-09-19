@@ -10,7 +10,7 @@ interface ThemeSwitcherProps {
   showPaletteName?: boolean;
 }
 
-const DARK_PRESETS = ["emerald-matrix", "developer-dark", "midnight-purple", "amber-obsidian"];
+const DARK_PRESETS = ["developer-dark", "amber-obsidian", "emerald-matrix", "midnight-purple"];
 const LIGHT_PRESETS = ["minimal-light", "nordic-frost", "warm-editorial", "rose-quartz"];
 
 export function ThemeSwitcher({

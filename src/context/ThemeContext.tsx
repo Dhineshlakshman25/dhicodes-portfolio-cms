@@ -29,21 +29,21 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const DARK_THEME_IDS = ["developer-dark", "emerald-matrix", "midnight-purple", "amber-obsidian"];
+const DARK_THEME_IDS = ["developer-dark", "amber-obsidian", "emerald-matrix", "midnight-purple"];
 const LIGHT_THEME_IDS = ["minimal-light", "nordic-frost", "warm-editorial", "rose-quartz"];
 
 // Static fallback theme while fetching from database
 const DEFAULT_FALLBACK_THEME: ThemeData = {
-  id: "emerald-matrix",
-  name: "Cyber Matrix",
-  slug: "emerald-matrix",
-  description: "Pitch obsidian with emerald green matrix accents",
-  primary_color: "#10b981",
-  secondary_color: "#059669",
-  accent_color: "#34d399",
-  background_color: "#040d08",
-  surface_color: "#0b1a11",
-  text_color: "#ecfdf5",
+  id: "developer-dark",
+  name: "Midnight Developer",
+  slug: "developer-dark",
+  description: "Deep slate & electric sky blue theme tailored for engineers",
+  primary_color: "#38bdf8",
+  secondary_color: "#6366f1",
+  accent_color: "#10b981",
+  background_color: "#090d16",
+  surface_color: "#111827",
+  text_color: "#f8fafc",
   is_default: true,
   is_active: true,
 };
@@ -51,7 +51,7 @@ const DEFAULT_FALLBACK_THEME: ThemeData = {
 export function ThemeProvider({
   children,
   initialThemes = [],
-  defaultThemeId = "emerald-matrix",
+  defaultThemeId = "developer-dark",
 }: {
   children: React.ReactNode;
   initialThemes?: ThemeData[];
@@ -185,10 +185,10 @@ export function ThemeProvider({
         themes[0];
       if (lightTheme) setThemeId(lightTheme.id);
     } else {
-      // Switch to first matching dark theme or emerald-matrix
+      // Switch to Midnight Developer or first matching dark theme
       const darkTheme =
+        themes.find((t) => t.id === "developer-dark" || t.slug === "developer-dark") ||
         themes.find((t) => DARK_THEME_IDS.includes(t.id) || DARK_THEME_IDS.includes(t.slug)) ||
-        themes.find((t) => t.id === "emerald-matrix") ||
         themes[0];
       if (darkTheme) setThemeId(darkTheme.id);
     }

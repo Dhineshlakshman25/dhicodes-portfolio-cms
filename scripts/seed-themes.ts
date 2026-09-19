@@ -16,7 +16,7 @@ const themes = [
     surface_color: "#111827",
     text_color: "#f8fafc",
     font_family: "Inter, sans-serif",
-    is_default: false,
+    is_default: true,
     is_active: true,
   },
   {
@@ -31,7 +31,7 @@ const themes = [
     surface_color: "#0b1a11",
     text_color: "#ecfdf5",
     font_family: "Inter, sans-serif",
-    is_default: true,
+    is_default: false,
     is_active: true,
   },
   {
@@ -151,12 +151,12 @@ async function main() {
     });
   }
 
-  // Ensure active_theme_id is set
+  // Ensure active_theme_id is set to developer-dark
   const settings = await prisma.site_settings.findFirst();
-  if (settings && !settings.active_theme_id) {
+  if (settings) {
     await prisma.site_settings.update({
       where: { id: settings.id },
-      data: { active_theme_id: "emerald-matrix" },
+      data: { active_theme_id: "developer-dark" },
     });
   }
 
