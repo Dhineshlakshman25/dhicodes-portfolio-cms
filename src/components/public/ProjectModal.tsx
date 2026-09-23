@@ -177,7 +177,15 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
               </a>
             )}
             {project.live_url && (
-              <a href={project.live_url} target="_blank" rel="noreferrer">
+              <a
+                href={
+                  project.live_url.includes("localhost")
+                    ? "https://www.dhicodes.dev"
+                    : project.live_url
+                }
+                target="_blank"
+                rel="noreferrer"
+              >
                 <Button
                   variant="primary"
                   size="sm"

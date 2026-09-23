@@ -223,7 +223,11 @@ export function ProjectsSection({ projects = [] }: ProjectsSectionProps) {
                       )}
                       {project.live_url && (
                         <a
-                          href={project.live_url}
+                          href={
+                            project.live_url.includes("localhost")
+                              ? "https://www.dhicodes.dev"
+                              : project.live_url
+                          }
                           target="_blank"
                           rel="noreferrer"
                           className="p-2 rounded-xl border transition hover:scale-110"

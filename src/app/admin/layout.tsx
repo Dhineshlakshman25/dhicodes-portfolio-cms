@@ -295,7 +295,7 @@ export default function AdminLayout({
             <ThemeSwitcher />
 
             <Link
-              href="/"
+              href="https://www.dhicodes.dev"
               target="_blank"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition hover:scale-105 active:scale-95"
               style={{

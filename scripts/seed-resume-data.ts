@@ -351,7 +351,7 @@ Key Modules Developed:
       is_featured: true,
       is_published: true,
       display_order: 2,
-      live_url: "http://localhost:3000",
+      live_url: "https://www.dhicodes.dev",
       github_url: "https://github.com/dhinesh-lakshman/portfolio-cms",
       cover_image: null,
       short_description:

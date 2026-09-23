@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
               <Plus className="w-4 h-4 mr-1" /> Add Project
             </Button>
           </Link>
-          <Link href="/" target="_blank">
+          <Link href="https://www.dhicodes.dev" target="_blank">
             <Button
               variant="outline"
               size="sm"

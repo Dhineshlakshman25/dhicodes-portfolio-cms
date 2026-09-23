@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
       <div className="absolute top-4 right-4 flex items-center gap-2">
         <ThemeSwitcher align="right" />
         <Link
-          href="/"
+          href="https://www.dhicodes.dev"
           className="text-xs font-semibold px-3 py-2 rounded-xl border transition"
           style={{
             backgroundColor: "color-mix(in srgb, var(--theme-surface) 80%, transparent)",
@@ -165,7 +165,7 @@ export default function AdminLoginPage() {
             style={{ borderColor: "color-mix(in srgb, var(--theme-text) 8%, transparent)" }}
           >
             <Link
-              href="/"
+              href="https://www.dhicodes.dev"
               className="text-xs font-medium opacity-75 hover:opacity-100 transition"
               style={{ color: "var(--theme-primary)" }}
             >
