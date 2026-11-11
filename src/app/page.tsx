@@ -46,6 +46,34 @@ function PortfolioView({
 
   const activeSocialLinks = socialLinks.filter((s) => s.is_active !== false);
 
+  useEffect(() => {
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !("IntersectionObserver" in window)
+    ) {
+      return;
+    }
+
+    const revealSections = document.querySelectorAll<HTMLElement>(
+      "#portfolio-root main > section, #portfolio-root [data-scroll-reveal]",
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle("is-visible", entry.isIntersecting);
+        });
+      },
+      { threshold: 0.04, rootMargin: "0px 0px -24px 0px" },
+    );
+
+    revealSections.forEach((section) => {
+      section.classList.add("scroll-reveal");
+      observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
       id="portfolio-root"
@@ -109,7 +137,7 @@ function PortfolioView({
       </main>
 
       {/* Dynamic Footer */}
-      <div className="relative z-10">
+      <div className="relative z-10" data-scroll-reveal>
         <Footer
           name={profile?.name || settings?.site_name || "Dhinesh Lakshmanan"}
           footerText={settings?.footer_text}

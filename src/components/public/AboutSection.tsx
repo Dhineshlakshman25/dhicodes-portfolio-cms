@@ -2,21 +2,14 @@
 
 import React from "react";
 import {
-  Code2,
-  Rocket,
-  Layers,
   CheckCircle,
   GraduationCap,
   MapPin,
-  Clock,
   Sparkles,
-  ShieldCheck,
   Zap,
   Database,
   Workflow,
-  Cpu,
 } from "lucide-react";
-import { Card } from "@/components/ui/Card";
 
 interface AboutSectionProps {
   bio?: string | null;
@@ -35,7 +28,10 @@ export function AboutSection({
     "I am a Senior Software Engineer specializing in full-stack architecture, enterprise SaaS, and scalable cloud applications. Currently leading engineering for Zolve HR, an all-in-one Human Resource Management & Payroll Platform serving attendance tracking, approval hierarchies, complex payroll runs, and employee self-service. My focus is writing clean, domain-driven TypeScript & Node.js, designing optimized database schemas, and crafting pixel-perfect interfaces.";
 
   return (
-    <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section
+      id="about"
+      className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+    >
       <div className="space-y-12">
         {/* Section Header */}
         <div className="text-center space-y-3 max-w-2xl mx-auto">

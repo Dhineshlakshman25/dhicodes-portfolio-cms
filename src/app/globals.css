@@ -44,6 +44,10 @@ body {
   overflow-x: hidden;
 }
 
+#portfolio-root main > section {
+  scroll-margin-top: 6rem;
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
@@ -116,6 +120,24 @@ body {
   opacity: 0.18;
   pointer-events: none;
   z-index: 0;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  filter: blur(3px);
+  transform: translate3d(0, 42px, 0) scale(0.985);
+  transition:
+    opacity 720ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 720ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 720ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) scale(1);
+  will-change: auto;
 }
 
 .portfolio-atmosphere {
@@ -398,7 +420,62 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  #portfolio-root main > section {
+    scroll-margin-top: 5rem;
+  }
+
+  .portfolio-atmosphere::before {
+    background-size: 48px 48px;
+  }
+
+  .atmosphere-orbit {
+    top: 46%;
+    width: 118vw;
+    height: min(48vh, 390px);
+  }
+
+  .atmosphere-orbit::after {
+    inset: 10%;
+  }
+
+  .atmosphere-orb {
+    width: 75vw;
+    filter: blur(44px);
+  }
+
+  .atmosphere-orb-primary {
+    top: 20%;
+    left: -34%;
+  }
+
+  .atmosphere-orb-secondary {
+    right: -36%;
+    bottom: 12%;
+  }
+
+  .atmosphere-star-two {
+    right: 12%;
+  }
+
+  .atmosphere-star-four {
+    right: 10%;
+  }
+
+  .atmosphere-star-five {
+    left: 6%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    transform: none;
+    transition: none;
+    filter: none;
+    opacity: 1;
+    will-change: auto;
+  }
+
   .portfolio-atmosphere::after,
   .atmosphere-orb {
     display: none;
