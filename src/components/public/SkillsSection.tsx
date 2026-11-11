@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Cpu, Star, Search, X } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Cpu, Star, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 
 interface SkillCategory {
   id: number;
@@ -27,6 +26,8 @@ interface SkillsSectionProps {
 export function SkillsSection({ skills = [], categories = [] }: SkillsSectionProps) {
   const [activeTab, setActiveTab] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAllSkills, setShowAllSkills] = useState(false);
+  const initialSkillCount = 8;
 
   const filteredSkills = useMemo(() => {
     let result = skills;
@@ -37,8 +38,16 @@ export function SkillsSection({ skills = [], categories = [] }: SkillsSectionPro
       const q = searchQuery.toLowerCase().trim();
       result = result.filter((s) => s.name.toLowerCase().includes(q));
     }
-    return result;
+    return [...result].sort(
+      (a, b) => Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured)),
+    );
   }, [skills, activeTab, searchQuery]);
+
+  const isSearching = searchQuery.trim().length > 0;
+  const visibleSkills =
+    showAllSkills || isSearching
+      ? filteredSkills
+      : filteredSkills.slice(0, initialSkillCount);
 
   const getTierLabel = (prof: number) => {
     if (prof >= 90) return { label: "Mastery", color: "text-emerald-500" };
@@ -63,42 +72,56 @@ export function SkillsSection({ skills = [], categories = [] }: SkillsSectionPro
         </div>
 
         {/* Search and Filters Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
+        <div className="flex flex-col items-stretch gap-4 max-w-4xl mx-auto">
           {/* Category Tabs */}
           {categories.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-1.5 p-1 rounded-2xl border"
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--theme-surface) 75%, transparent)",
-                borderColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
-              }}
-            >
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <button
-                onClick={() => setActiveTab("all")}
-                style={activeTab === "all" ? { backgroundColor: "var(--theme-primary)" } : undefined}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                onClick={() => {
+                  setActiveTab("all");
+                  setShowAllSkills(false);
+                }}
+                type="button"
+                aria-pressed={activeTab === "all"}
+                style={activeTab === "all" ? {
+                  backgroundColor: "color-mix(in srgb, var(--theme-primary) 12%, var(--theme-surface))",
+                  borderColor: "color-mix(in srgb, var(--theme-primary) 38%, transparent)",
+                  color: "var(--theme-primary)",
+                } : undefined}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "all"
-                    ? "text-white shadow-sm"
-                    : "opacity-70 hover:opacity-100 text-[var(--theme-text)]"
+                    ? ""
+                    : "border-[color-mix(in_srgb,var(--theme-text)_12%,transparent)] text-[color-mix(in_srgb,var(--theme-text)_72%,transparent)] hover:border-[color-mix(in_srgb,var(--theme-primary)_35%,transparent)] hover:text-[var(--theme-text)]"
                 }`}
               >
-                All ({skills.length})
+                All <span className="text-[10px] opacity-65">{skills.length}</span>
               </button>
 
               {categories.map((cat) => {
                 const count = skills.filter((s) => s.category_id === cat.id).length;
                 const isActive = activeTab === cat.id;
+                if (count === 0) return null;
                 return (
                   <button
                     key={cat.id}
-                    onClick={() => setActiveTab(cat.id)}
-                    style={isActive ? { backgroundColor: "var(--theme-primary)" } : undefined}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    onClick={() => {
+                      setActiveTab(cat.id);
+                      setShowAllSkills(false);
+                    }}
+                    type="button"
+                    aria-pressed={isActive}
+                    style={isActive ? {
+                      backgroundColor: "color-mix(in srgb, var(--theme-primary) 12%, var(--theme-surface))",
+                      borderColor: "color-mix(in srgb, var(--theme-primary) 38%, transparent)",
+                      color: "var(--theme-primary)",
+                    } : undefined}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                       isActive
-                        ? "text-white shadow-sm"
-                        : "opacity-70 hover:opacity-100 text-[var(--theme-text)]"
+                        ? ""
+                        : "border-[color-mix(in_srgb,var(--theme-text)_12%,transparent)] text-[color-mix(in_srgb,var(--theme-text)_72%,transparent)] hover:border-[color-mix(in_srgb,var(--theme-primary)_35%,transparent)] hover:text-[var(--theme-text)]"
                     }`}
                   >
-                    {cat.name} ({count})
+                    {cat.name} <span className="text-[10px] opacity-65">{count}</span>
                   </button>
                 );
               })}
@@ -106,13 +129,17 @@ export function SkillsSection({ skills = [], categories = [] }: SkillsSectionPro
           )}
 
           {/* Search Input */}
-          <div className="relative w-full sm:w-60">
+          <div className="relative w-full max-w-sm self-center">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 opacity-50" />
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowAllSkills(false);
+              }}
               placeholder="Search skill (e.g. React)..."
+              aria-label="Search technical skills"
               className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border bg-transparent text-[var(--theme-text)] placeholder:opacity-50 focus:outline-none focus:ring-2"
               style={{
                 borderColor: "color-mix(in srgb, var(--theme-text) 12%, transparent)",
@@ -121,7 +148,12 @@ export function SkillsSection({ skills = [], categories = [] }: SkillsSectionPro
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setShowAllSkills(false);
+                }}
+                type="button"
+                aria-label="Clear skill search"
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-white/10 opacity-60"
               >
                 <X className="w-3 h-3" />
@@ -145,7 +177,9 @@ export function SkillsSection({ skills = [], categories = [] }: SkillsSectionPro
               onClick={() => {
                 setSearchQuery("");
                 setActiveTab("all");
+                setShowAllSkills(false);
               }}
+              type="button"
               className="text-xs font-bold underline"
               style={{ color: "var(--theme-primary)" }}
             >
@@ -153,74 +187,101 @@ export function SkillsSection({ skills = [], categories = [] }: SkillsSectionPro
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredSkills.map((skill) => {
-              const proficiency = skill.proficiency ?? 80;
-              const tier = getTierLabel(proficiency);
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {visibleSkills.map((skill) => {
+                const proficiency = skill.proficiency ?? 80;
+                const tier = getTierLabel(proficiency);
 
-              return (
-                <div
-                  key={skill.id}
-                  className="p-4 sm:p-5 rounded-2xl border transition-all duration-200 group hover:-translate-y-0.5"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--theme-surface) 80%, transparent)",
-                    borderColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
-                  }}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5 min-w-0">
+                return (
+                  <div
+                    key={skill.id}
+                    className="p-4 sm:p-5 rounded-2xl border transition-all duration-200 group hover:-translate-y-0.5"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--theme-surface) 80%, transparent)",
+                      borderColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
+                    }}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
+                            style={{
+                              backgroundColor: "color-mix(in srgb, var(--theme-primary) 12%, transparent)",
+                              borderColor: "color-mix(in srgb, var(--theme-primary) 25%, transparent)",
+                              color: "var(--theme-primary)",
+                            }}
+                          >
+                            <Cpu className="w-4 h-4" />
+                          </div>
+                          <h3 className="font-bold text-sm text-[var(--theme-text)] truncate group-hover:text-[var(--theme-primary)] transition-colors">
+                            {skill.name}
+                          </h3>
+                        </div>
+
+                        {skill.is_featured && (
+                          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                        )}
+                      </div>
+
+                      {/* Progress Bar & Tier Badge */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className={`font-semibold ${tier.color}`}>
+                            {tier.label}
+                          </span>
+                          <span className="font-mono font-bold opacity-75">
+                            {proficiency}%
+                          </span>
+                        </div>
+
                         <div
-                          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
+                          className="w-full h-2 rounded-full overflow-hidden"
                           style={{
-                            backgroundColor: "color-mix(in srgb, var(--theme-primary) 12%, transparent)",
-                            borderColor: "color-mix(in srgb, var(--theme-primary) 25%, transparent)",
-                            color: "var(--theme-primary)",
+                            backgroundColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
                           }}
                         >
-                          <Cpu className="w-4 h-4" />
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${proficiency}%`,
+                              background: "linear-gradient(90deg, var(--theme-primary), var(--theme-secondary))",
+                            }}
+                          />
                         </div>
-                        <h3 className="font-bold text-sm text-[var(--theme-text)] truncate group-hover:text-[var(--theme-primary)] transition-colors">
-                          {skill.name}
-                        </h3>
-                      </div>
-
-                      {skill.is_featured && (
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
-                      )}
-                    </div>
-
-                    {/* Progress Bar & Tier Badge */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className={`font-semibold ${tier.color}`}>
-                          {tier.label}
-                        </span>
-                        <span className="font-mono font-bold opacity-75">
-                          {proficiency}%
-                        </span>
-                      </div>
-
-                      <div
-                        className="w-full h-2 rounded-full overflow-hidden"
-                        style={{
-                          backgroundColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
-                        }}
-                      >
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${proficiency}%`,
-                            background: "linear-gradient(90deg, var(--theme-primary), var(--theme-secondary))",
-                          }}
-                        />
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {!isSearching && filteredSkills.length > initialSkillCount && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  aria-expanded={showAllSkills}
+                  onClick={() => setShowAllSkills((current) => !current)}
+                  className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold transition-colors hover:border-[var(--theme-primary)] hover:text-[var(--theme-primary)]"
+                  style={{
+                    borderColor: "color-mix(in srgb, var(--theme-text) 15%, transparent)",
+                    color: "var(--theme-text)",
+                  }}
+                >
+                  {showAllSkills ? (
+                    <>
+                      Show fewer skills <ChevronUp className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Show all {filteredSkills.length} skills <ChevronDown className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

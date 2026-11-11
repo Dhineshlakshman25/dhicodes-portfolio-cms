@@ -49,12 +49,27 @@ function PortfolioView({
   return (
     <div
       id="portfolio-root"
-      className="min-h-screen flex flex-col transition-colors duration-300 selection:bg-[var(--theme-primary)] selection:text-white"
+      className="relative isolate min-h-screen flex flex-col transition-colors duration-300 selection:bg-[var(--theme-primary)] selection:text-white"
       style={{
         backgroundColor: "var(--theme-bg)",
         color: "var(--theme-text)",
       }}
     >
+      <div className="portfolio-atmosphere" aria-hidden="true">
+        <span className="atmosphere-orb atmosphere-orb-primary" />
+        <span className="atmosphere-orb atmosphere-orb-secondary" />
+        <div className="atmosphere-orbit">
+          <span className="atmosphere-planet" />
+        </div>
+        <span className="atmosphere-star atmosphere-star-one" />
+        <span className="atmosphere-star atmosphere-star-two" />
+        <span className="atmosphere-star atmosphere-star-three" />
+        <span className="atmosphere-star atmosphere-star-four" />
+        <span className="atmosphere-star atmosphere-star-five" />
+        <span className="atmosphere-star atmosphere-star-six" />
+        <span className="atmosphere-star atmosphere-star-seven" />
+      </div>
+
       {/* Sticky Blur Navbar with Light/Dark and Palette Switcher */}
       <Navbar
         name={profile?.name || settings?.site_name || "Dhinesh Lakshmanan"}
@@ -63,7 +78,7 @@ function PortfolioView({
       />
 
       {/* Main Sections */}
-      <main className="flex-1">
+      <main className="relative z-10 flex-1">
         <HeroSection profile={profile} socialLinks={activeSocialLinks} />
 
         <AboutSection
@@ -94,12 +109,14 @@ function PortfolioView({
       </main>
 
       {/* Dynamic Footer */}
-      <Footer
-        name={profile?.name || settings?.site_name || "Dhinesh Lakshmanan"}
-        footerText={settings?.footer_text}
-        logoUrl={settings?.logo_url}
-        socialLinks={activeSocialLinks}
-      />
+      <div className="relative z-10">
+        <Footer
+          name={profile?.name || settings?.site_name || "Dhinesh Lakshmanan"}
+          footerText={settings?.footer_text}
+          logoUrl={settings?.logo_url}
+          socialLinks={activeSocialLinks}
+        />
+      </div>
     </div>
   );
 }
