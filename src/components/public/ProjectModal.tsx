@@ -39,10 +39,15 @@ interface ProjectModalProps {
 
 export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageAspect, setImageAspect] = useState<{ src: string; ratio: number } | null>(null);
 
   if (!project) return null;
 
   const displayImage = selectedImage || project.cover_image;
+  const displayAspectRatio =
+    imageAspect && imageAspect.src === displayImage
+      ? imageAspect.ratio
+      : 16 / 9;
 
   return (
     <Modal
@@ -59,8 +64,9 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
         {/* Main Display Image */}
         {displayImage && (
           <div
-            className="relative w-full h-[min(58vh,600px)] min-h-64 rounded-2xl overflow-hidden border"
+            className="relative w-full max-h-[58vh] rounded-2xl overflow-hidden border"
             style={{
+              aspectRatio: displayAspectRatio,
               background: "linear-gradient(135deg, color-mix(in srgb, var(--theme-bg) 92%, var(--theme-surface)), color-mix(in srgb, var(--theme-primary) 8%, var(--theme-bg)))",
               borderColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
             }}
@@ -71,6 +77,15 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
               fill
               sizes="(max-width: 768px) 100vw, 896px"
               className="object-contain p-2 sm:p-4"
+              onLoad={(event) => {
+                const { naturalWidth, naturalHeight } = event.currentTarget;
+                if (naturalWidth > 0 && naturalHeight > 0) {
+                  setImageAspect({
+                    src: displayImage,
+                    ratio: naturalWidth / naturalHeight,
+                  });
+                }
+              }}
             />
           </div>
         )}

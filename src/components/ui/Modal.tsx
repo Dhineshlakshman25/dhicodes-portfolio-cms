@@ -1,7 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+
+const subscribeToMount = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export interface ModalProps {
   isOpen: boolean;
@@ -20,6 +25,12 @@ export function Modal({
   children,
   maxWidth = "lg",
 }: ModalProps) {
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -36,7 +47,7 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const maxWidthClasses = {
     sm: "max-w-sm",
@@ -47,8 +58,8 @@ export function Modal({
     "4xl": "max-w-4xl",
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in"
@@ -59,7 +70,7 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full ${maxWidthClasses[maxWidth]} my-8 border rounded-3xl shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200`}
+        className={`relative flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] w-full ${maxWidthClasses[maxWidth]} my-auto border rounded-3xl shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200`}
         style={{
           backgroundColor: "var(--theme-surface)",
           borderColor: "color-mix(in srgb, var(--theme-text) 12%, transparent)",
@@ -92,8 +103,9 @@ export function Modal({
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[75vh] overflow-y-auto">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
