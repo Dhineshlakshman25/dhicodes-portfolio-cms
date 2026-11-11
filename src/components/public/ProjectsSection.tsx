@@ -122,14 +122,17 @@ export function ProjectsSection({ projects = [] }: ProjectsSectionProps) {
               >
                 {/* Image / Header Graphic */}
                 <div
-                  className="relative w-full h-52 bg-[var(--theme-surface)] overflow-hidden cursor-pointer"
+                  className="relative w-full h-52 overflow-hidden cursor-pointer"
+                  style={{
+                    background: "linear-gradient(135deg, color-mix(in srgb, var(--theme-surface) 92%, var(--theme-bg)), color-mix(in srgb, var(--theme-primary) 8%, var(--theme-bg)))",
+                  }}
                   onClick={() => handleOpenDetail(project)}
                 >
                   <SafeImage
                     src={project.cover_image}
                     alt={project.title}
                     fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-[1.02]"
                     fallback={
                       <div
                         className="w-full h-full flex flex-col items-center justify-center p-6 text-center"

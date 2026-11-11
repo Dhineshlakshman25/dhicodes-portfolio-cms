@@ -3,11 +3,8 @@
 import React, { useState } from "react";
 import { SafeImage } from "@/components/ui/SafeImage";
 import {
-  X,
   ExternalLink,
   CheckCircle2,
-  Calendar,
-  Layers,
 } from "lucide-react";
 import { GithubIcon } from "@/components/ui/Icons";
 
@@ -56,17 +53,24 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
       }}
       title={project.title}
       description={project.project_type || "Featured Project"}
-      maxWidth="2xl"
+      maxWidth="4xl"
     >
       <div className="space-y-6">
         {/* Main Display Image */}
         {displayImage && (
-          <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-[var(--theme-surface)] border border-[var(--theme-surface)]">
+          <div
+            className="relative w-full h-[min(58vh,600px)] min-h-64 rounded-2xl overflow-hidden border"
+            style={{
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--theme-bg) 92%, var(--theme-surface)), color-mix(in srgb, var(--theme-primary) 8%, var(--theme-bg)))",
+              borderColor: "color-mix(in srgb, var(--theme-text) 10%, transparent)",
+            }}
+          >
             <SafeImage
               src={displayImage}
               alt={project.title}
               fill
-              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 896px"
+              className="object-contain p-2 sm:p-4"
             />
           </div>
         )}
@@ -89,7 +93,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     src={project.cover_image}
                     alt="Cover"
                     fill
-                    className="object-cover"
+                    className="object-contain bg-[var(--theme-bg)]"
                   />
                 </div>
               )}
@@ -107,7 +111,7 @@ export function ProjectModal({ project, isOpen, onClose }: ProjectModalProps) {
                     src={img.image_url}
                     alt={img.title || "Screenshot"}
                     fill
-                    className="object-cover"
+                    className="object-contain bg-[var(--theme-bg)]"
                   />
                 </div>
               ))}
